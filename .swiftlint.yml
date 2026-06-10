@@ -1,16 +1,35 @@
-disabled_rules:
-  - todo
 opt_in_rules:
   - empty_string
+  - empty_enum_arguments
+
+disabled_rules:
+  - unneeded_synthesized_initializer
+
+statement_position:
+  severity: error
+  statement_mode: uncuddled_else
+
 line_length:
   warning: 200
   error: 300
+
 function_body_length:
   warning: 300
   error: 500
+
 identifier_name:
   excluded:
-    - id
-    - up
+    # RGB
+    - r
+    - g
+    - b
+    # HSL / HSB
+    - h
+    - s
+    - l
+    # Coordinates
     - x
     - y
+    # Misc
+    - id
+    - up
