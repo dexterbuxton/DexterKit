@@ -45,7 +45,7 @@ public struct PalettePicker: View {
   private let columns: Int
   private let width: Width
   private let height: Height
-  private let style: AppButtonStyle
+  private let style: CustomButtonStyle
   @Binding private var selection: Palette.Element.ID?
 
   /// The width the picker has been given, measured in `.fill` mode.
@@ -60,7 +60,7 @@ public struct PalettePicker: View {
     columns: Int = 8,
     width: Width = .fixed(44),
     height: Height = .matchWidth,
-    style: AppButtonStyle = .rectangle,
+    style: CustomButtonStyle = .rectangle,
     selection: Binding<Palette.Element.ID?>
   ) {
     self.palette = palette
@@ -147,7 +147,7 @@ public struct PalettePicker: View {
 
   @ViewBuilder
   private func swatch(for entry: Palette.Element, width: CGFloat, height: CGFloat) -> some View {
-    AppIndicatorButton(
+    CustomIndicatorButton(
       isOn: Binding(
         get: { selection == entry.id },
         set: { _ in selection = entry.id }

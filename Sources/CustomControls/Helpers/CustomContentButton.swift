@@ -2,16 +2,16 @@ import SwiftUI
 
 /// A tappable wrapper that applies the standard press animation to arbitrary content.
 ///
-/// `AppIndicatorButton` is for color swatches; `AppContentButton` is the general
+/// `CustomIndicatorButton` is for color swatches; `CustomContentButton` is the general
 /// case — the caller supplies the full visual, and this adds only the tap target
 /// and `ButtonPressStyle`, so the press feel matches every other button.
 ///
 /// ```swift
-/// AppContentButton(action: select) {
+/// CustomContentButton(action: select) {
 ///   RoundedRectangle(cornerRadius: 8).fill(color).frame(width: 80, height: 36)
 /// }
 /// ```
-public struct AppContentButton<Content: View>: View {
+public struct CustomContentButton<Content: View>: View {
 
   // MARK: Properties
 
@@ -32,14 +32,14 @@ public struct AppContentButton<Content: View>: View {
       content
         .contentShape(Rectangle())
     }
-    .buttonStyle(ButtonPressStyle())
+    .buttonStyle(CustomButtonPressStyle())
   }
 }
 
 // MARK: Preview
 
-#Preview("App Content Button") {
-  AppContentButton(
+#Preview("Content Button") {
+  CustomContentButton(
     action: {},
     content: {
       RoundedRectangle(cornerRadius: 8)

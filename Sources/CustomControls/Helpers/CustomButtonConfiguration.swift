@@ -1,10 +1,8 @@
 import SwiftUI
 
 /// Single source of truth for button-specific configuration values.
-///
-/// Holds only values that are button-specific — ratios, animation constants,
-/// corner radii, and spacing.
-public enum AppButtonConfiguration {
+/// This includes: ratios, animation constants, corner radii, and spacing.
+public enum CustomButtonConfiguration {
 
   // MARK: Size
 
@@ -89,7 +87,7 @@ public enum AppButtonConfiguration {
   // MARK: Computed Helpers
 
   /// Returns the corner radius for a given button style.
-  public static func cornerRadius(for style: AppButtonStyle) -> CGFloat {
+  public static func cornerRadius(for style: CustomButtonStyle) -> CGFloat {
     switch style {
     case .circle: circleCornerRadius
     case .rectangle: roundedRectangleCornerRadius

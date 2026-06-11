@@ -7,17 +7,17 @@ import SwiftUI
 /// selection across many buttons, derive each binding from shared parent state:
 ///
 /// ```swift
-/// AppIndicatorButton(
+/// CustomIndicatorButton(
 ///   isOn: Binding(get: { selected == item }, set: { _ in selected = item }),
 ///   color: item.color,
 ///   dotColor: .white
 /// )
 /// ```
-public struct AppIndicatorButton: View {
+public struct CustomIndicatorButton: View {
 
   // MARK: Properties
 
-  private let style: AppButtonStyle
+  private let style: CustomButtonStyle
   private let width: CGFloat
   private let height: CGFloat
   private let color: Color
@@ -31,11 +31,11 @@ public struct AppIndicatorButton: View {
   /// Creates a square indicator button.
   public init(
     isOn: Binding<Bool>,
-    style: AppButtonStyle = .circle,
-    size: CGFloat = AppButtonConfiguration.buttonSize,
+    style: CustomButtonStyle = .circle,
+    size: CGFloat = CustomButtonConfiguration.buttonSize,
     color: Color,
     dotColor: Color,
-    dotScale: CGFloat = AppButtonConfiguration.indicatorDotRatio
+    dotScale: CGFloat = CustomButtonConfiguration.indicatorDotRatio
   ) {
     self.init(
       isOn: isOn,
@@ -51,12 +51,12 @@ public struct AppIndicatorButton: View {
   /// Creates an indicator button with independent width and height.
   public init(
     isOn: Binding<Bool>,
-    style: AppButtonStyle = .circle,
+    style: CustomButtonStyle = .circle,
     width: CGFloat,
     height: CGFloat,
     color: Color,
     dotColor: Color,
-    dotScale: CGFloat = AppButtonConfiguration.indicatorDotRatio
+    dotScale: CGFloat = CustomButtonConfiguration.indicatorDotRatio
   ) {
     self._isOn = isOn
     self.style = style
@@ -83,16 +83,16 @@ public struct AppIndicatorButton: View {
       Circle()
         .fill(dotColor)
         .frame(width: dotSize, height: dotSize)
-        .opacity(isOn ? AppButtonConfiguration.enabledOpacity : 0)
+        .opacity(isOn ? CustomButtonConfiguration.enabledOpacity : 0)
         .animation(.easeInOut(duration: 0.2), value: isOn)
         .frame(width: width, height: height)
         .contentShape(Rectangle())
         .background(
-          RoundedRectangle(cornerRadius: AppButtonConfiguration.cornerRadius(for: style))
+          RoundedRectangle(cornerRadius: CustomButtonConfiguration.cornerRadius(for: style))
             .fill(color)
         )
     }
-    .buttonStyle(ButtonPressStyle())
+    .buttonStyle(CustomButtonPressStyle())
   }
 }
 
@@ -106,11 +106,11 @@ public struct AppIndicatorButton: View {
     var body: some View {
       VStack(spacing: 16) {
         HStack(spacing: 16) {
-          AppIndicatorButton(isOn: $isOnCircle, color: .blue, dotColor: .white)
-          AppIndicatorButton(isOn: $isOnRectangle, style: .rectangle, color: .green, dotColor: .black)
+          CustomIndicatorButton(isOn: $isOnCircle, color: .blue, dotColor: .white)
+          CustomIndicatorButton(isOn: $isOnRectangle, style: .rectangle, color: .green, dotColor: .black)
         }
         // Rectangular (wide-short) — the new initializer.
-        AppIndicatorButton(
+        CustomIndicatorButton(
           isOn: .constant(true),
           style: .rectangle,
           width: 120,
