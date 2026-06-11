@@ -9,7 +9,8 @@ let package = Package(
   ],
   products: [
     .library(name: "Extensions", targets: ["Extensions"]),
-    .library(name: "CustomColors", targets: ["CustomColors"])
+    .library(name: "CustomColors", targets: ["CustomColors"]),
+    .library(name: "CustomSliders", targets: ["CustomSliders"])
   ],
   dependencies: [
     .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: "0.63.2")
@@ -17,30 +18,32 @@ let package = Package(
   targets: [
     .target(
       name: "Extensions",
-      plugins: [
-        .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")
-      ]
+      plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
     ),
     .testTarget(
       name: "ExtensionsTests",
       dependencies: ["Extensions"],
-      plugins: [
-        .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")
-      ]
+      plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
     ),
     .target(
       name: "CustomColors",
       dependencies: ["Extensions"],
-      plugins: [
-        .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")
-      ]
+      plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
     ),
     .testTarget(
       name: "CustomColorsTests",
       dependencies: ["CustomColors"],
-      plugins: [
-        .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")
-      ]
+      plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
+    ),
+    .target(
+      name: "CustomSliders",
+      dependencies: ["Extensions"],
+      plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
+    ),
+    .testTarget(
+      name: "CustomSlidersTests",
+      dependencies: ["CustomSliders"],
+      plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
     )
   ]
 )
