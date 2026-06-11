@@ -10,7 +10,8 @@ let package = Package(
   products: [
     .library(name: "Extensions", targets: ["Extensions"]),
     .library(name: "CustomColors", targets: ["CustomColors"]),
-    .library(name: "CustomSliders", targets: ["CustomSliders"])
+    .library(name: "CustomSliders", targets: ["CustomSliders"]),
+    .library(name: "CustomControls", targets: ["CustomControls"])
   ],
   dependencies: [
     .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: "0.63.2")
@@ -43,6 +44,11 @@ let package = Package(
     .testTarget(
       name: "CustomSlidersTests",
       dependencies: ["CustomSliders"],
+      plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
+    ),
+    .target(
+      name: "CustomControls",
+      dependencies: ["Extensions", "CustomColors"],
       plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
     )
   ]

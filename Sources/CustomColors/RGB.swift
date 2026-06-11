@@ -139,45 +139,6 @@ public struct RGB: Identifiable, Hashable, Sendable {
     let normalizedValue = value.normalized()
     self.init(r: normalizedValue, g: normalizedValue, b: normalizedValue)
   }
-
-  // MARK: Methods
-
-  /// Generates a random RGB color with red, green, and blue values between 0 and 255.
-  ///
-  /// - Returns: A randomly generated `RGB` instance.
-  public static var random: RGB {
-    // Generate Random RGB Values between 0 and 255
-    return RGB(
-      r: .random(in: validRange),
-      g: .random(in: validRange),
-      b: .random(in: validRange)
-    )
-  }
-
-  public static let validRange = RGB.min...RGB.max
-  private static let min: Int = 0
-  private static let max: Int = 255
-
-  // MARK: Static Variables
-
-  // Basic Colors
-  public static let black   = RGB()
-  public static let white   = RGB(value: max)
-  public static let red     = RGB(r: max, g: min, b: min)
-  public static let green   = RGB(r: min, g: max, b: min)
-  public static let blue    = RGB(r: min, g: min, b: max)
-  public static let cyan    = RGB(r: min, g: max, b: max)
-  public static let magenta = RGB(r: max, g: min, b: max)
-  public static let yellow  = RGB(r: max, g: max, b: min)
-
-  // Grays
-  public static let gray = RGB(value: 127)
-  public static let lightGray: RGB  = RGB(value: 170)
-  public static let darkGray = RGB(value: 85)
-
-  // Visual Colors
-  public static let offBlack: RGB = RGB(value: 30)
-  public static let offWhite = RGB(value: 240)
 }
 
 extension RGB {

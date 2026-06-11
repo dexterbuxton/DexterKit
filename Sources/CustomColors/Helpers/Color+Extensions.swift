@@ -36,3 +36,12 @@ extension HSB {
     Color(hue: hValue, saturation: sValue, brightness: bValue)
   }
 }
+
+/// Converts a `Palette.Element` to a SwiftUI `Color`.
+extension Palette.Element {
+
+  /// A SwiftUI `Color` for the entry, in whatever representation it holds.
+  public var color: Color {
+    rgbValue.color
+  }
+}
