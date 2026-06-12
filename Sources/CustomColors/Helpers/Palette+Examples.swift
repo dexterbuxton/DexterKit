@@ -2,13 +2,16 @@ import Foundation
 
 public extension Palette {
 
-  /// A Material-style base palette: 16 named swatches.
+  /// A Material-style base palette: 16 named swatches for a 2×8 grid.
   ///
-  /// These were the colors previously baked into the `PaletteColor` enum, now
-  /// expressed as a plain `Palette` instance you can copy, edit, or replace.
+  /// The first entry, "Neutral", is the only adaptive one — off-black in light
+  /// mode, off-white in dark mode (Material Grey 900 / Grey 50). The remaining 15
+  /// are single colors. (Gray is omitted so "Neutral" fills the grayscale slot and
+  /// the set stays at 16.)
   static let material = Palette(
     name: "Material",
     entries: [
+      Element(name: "Neutral", hex: .offBlack, dark: .offWhite),
       Element(name: "Red", hex: Hex("F44336")),
       Element(name: "Pink", hex: Hex("E91E63")),
       Element(name: "Purple", hex: Hex("9C27B0")),
@@ -23,8 +26,7 @@ public extension Palette {
       Element(name: "Yellow", hex: Hex("FFEB3B")),
       Element(name: "Amber", hex: Hex("FFC107")),
       Element(name: "Orange", hex: Hex("FF9800")),
-      Element(name: "Deep Orange", hex: Hex("FF5722")),
-      Element(name: "Gray", hex: Hex("9E9E9E"))
+      Element(name: "Deep Orange", hex: Hex("FF5722"))
     ]
   )
 

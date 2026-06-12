@@ -5,10 +5,12 @@ import Extensions
 ///
 /// A `Palette` holds a list of `Palette.Element` values — each a single color in
 /// any supported representation (`Hex`, `RGB`, or `HSB`), optionally labeled with
-/// a name. It is a value type and safe to pass across concurrency boundaries.
+/// a name and optionally carrying a dark-mode variant. It is a value type and
+/// safe to pass across concurrency boundaries.
 public struct Palette: Identifiable, Hashable, Sendable {
 
-  /// A single color entry: a color in any representation, optionally named.
+  /// A single color entry: a color in any representation, optionally named, with
+  /// an optional dark-mode variant.
   public struct Element: Identifiable, Hashable, Sendable {
 
     // swiftlint:disable nesting
@@ -17,6 +19,35 @@ public struct Palette: Identifiable, Hashable, Sendable {
       case hex(Hex)
       case rgb(RGB)
       case hsb(HSB)
+
+      // MARK: Conversions
+
+      /// The `Hex` representation, converting if necessary.
+      public var hexValue: Hex {
+        switch self {
+        case .hex(let hex): hex
+        case .rgb(let rgb): Hex(rgb: rgb)
+        case .hsb(let hsb): hsb.toHex()
+        }
+      }
+
+      /// The `RGB` representation, converting if necessary.
+      public var rgbValue: RGB {
+        switch self {
+        case .hex(let hex): RGB(hex: hex)
+        case .rgb(let rgb): rgb
+        case .hsb(let hsb): hsb.toRGB()
+        }
+      }
+
+      /// The `HSB` representation, converting if necessary.
+      public var hsbValue: HSB {
+        switch self {
+        case .hex(let hex): HSB(hex: hex)
+        case .rgb(let rgb): HSB(rgb: rgb)
+        case .hsb(let hsb): hsb
+        }
+      }
     }
     // swiftlint:enable nesting
 
@@ -28,60 +59,46 @@ public struct Palette: Identifiable, Hashable, Sendable {
     /// An optional label for the color (e.g. "Red", "Lime").
     public var name: String?
 
-    /// The color value this entry holds.
+    /// The color value — used as the light/default appearance.
     public var value: Value
+
+    /// An optional dark-mode override. When `nil`, `value` is used in both schemes.
+    public var dark: Value?
 
     // MARK: Initializers
 
-    public init(id: UUID = UUID(), name: String? = nil, value: Value) {
+    public init(id: UUID = UUID(), name: String? = nil, value: Value, dark: Value? = nil) {
       self.id = id
       self.name = name
       self.value = value
+      self.dark = dark
     }
 
-    /// Creates a named (or unnamed) entry from a `Hex` color.
-    public init(name: String? = nil, hex: Hex) {
-      self.init(name: name, value: .hex(hex))
+    /// Creates an entry from a `Hex` color, with an optional dark `Hex`.
+    public init(name: String? = nil, hex: Hex, dark: Hex? = nil) {
+      self.init(name: name, value: .hex(hex), dark: dark.map(Value.hex))
     }
 
-    /// Creates a named (or unnamed) entry from an `RGB` color.
-    public init(name: String? = nil, rgb: RGB) {
-      self.init(name: name, value: .rgb(rgb))
+    /// Creates an entry from an `RGB` color, with an optional dark `RGB`.
+    public init(name: String? = nil, rgb: RGB, dark: RGB? = nil) {
+      self.init(name: name, value: .rgb(rgb), dark: dark.map(Value.rgb))
     }
 
-    /// Creates a named (or unnamed) entry from an `HSB` color.
-    public init(name: String? = nil, hsb: HSB) {
-      self.init(name: name, value: .hsb(hsb))
+    /// Creates an entry from an `HSB` color, with an optional dark `HSB`.
+    public init(name: String? = nil, hsb: HSB, dark: HSB? = nil) {
+      self.init(name: name, value: .hsb(hsb), dark: dark.map(Value.hsb))
     }
 
-    // MARK: Conversions
+    // MARK: Conversions (light / default)
 
-    /// The `Hex` representation, converting if necessary.
-    public var hexValue: Hex {
-      switch value {
-      case .hex(let hex): hex
-      case .rgb(let rgb): Hex(rgb: rgb)
-      case .hsb(let hsb): hsb.toHex()
-      }
-    }
+    /// The `Hex` representation of the light/default value.
+    public var hexValue: Hex { value.hexValue }
 
-    /// The `RGB` representation, converting if necessary.
-    public var rgbValue: RGB {
-      switch value {
-      case .hex(let hex): RGB(hex: hex)
-      case .rgb(let rgb): rgb
-      case .hsb(let hsb): hsb.toRGB()
-      }
-    }
+    /// The `RGB` representation of the light/default value.
+    public var rgbValue: RGB { value.rgbValue }
 
-    /// The `HSB` representation, converting if necessary.
-    public var hsbValue: HSB {
-      switch value {
-      case .hex(let hex): HSB(hex: hex)
-      case .rgb(let rgb): HSB(rgb: rgb)
-      case .hsb(let hsb): hsb
-      }
-    }
+    /// The `HSB` representation of the light/default value.
+    public var hsbValue: HSB { value.hsbValue }
 
     /// A display label: the `name` if set, otherwise the hex description.
     public var description: String {
@@ -122,19 +139,19 @@ public struct Palette: Identifiable, Hashable, Sendable {
     entries.append(entry)
   }
 
-  /// Appends a `Hex` color, optionally named.
-  public mutating func add(_ hex: Hex, name: String? = nil) {
-    add(Element(name: name, hex: hex))
+  /// Appends a `Hex` color, optionally named and with an optional dark variant.
+  public mutating func add(_ hex: Hex, name: String? = nil, dark: Hex? = nil) {
+    add(Element(name: name, hex: hex, dark: dark))
   }
 
-  /// Appends an `RGB` color, optionally named.
-  public mutating func add(_ rgb: RGB, name: String? = nil) {
-    add(Element(name: name, rgb: rgb))
+  /// Appends an `RGB` color, optionally named and with an optional dark variant.
+  public mutating func add(_ rgb: RGB, name: String? = nil, dark: RGB? = nil) {
+    add(Element(name: name, rgb: rgb, dark: dark))
   }
 
-  /// Appends an `HSB` color, optionally named.
-  public mutating func add(_ hsb: HSB, name: String? = nil) {
-    add(Element(name: name, hsb: hsb))
+  /// Appends an `HSB` color, optionally named and with an optional dark variant.
+  public mutating func add(_ hsb: HSB, name: String? = nil, dark: HSB? = nil) {
+    add(Element(name: name, hsb: hsb, dark: dark))
   }
 
   /// Inserts an entry at an index, clamped to valid bounds.

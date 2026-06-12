@@ -74,7 +74,19 @@ struct PaletteTests {
     #expect(Palette.material.name == "Material")
     #expect(Palette.material.count == 16)
     #expect(Palette.material.entries.allSatisfy { $0.name != nil })
-    #expect(Palette.material.entries.first?.name == "Red")
-    #expect(Palette.material.entries.first?.hexValue.code == "F44336")
+    #expect(Palette.material.entries.first?.name == "Neutral")
+    #expect(Palette.material.entries.first?.hexValue.code == "212121")
+    #expect(Palette.material.entries.first?.dark?.hexValue.code == "FAFAFA")
   }
+
+  @Test func testLightDarkVariant() throws {
+    let adaptive = Palette.Element(name: "Background", hex: Hex("FFFFFF"), dark: Hex("000000"))
+    #expect(adaptive.hexValue.code == "FFFFFF")        // light / default
+    #expect(adaptive.dark?.hexValue.code == "000000")  // dark override
+    #expect(adaptive.value.rgbValue.r == 255)
+
+    let plain = Palette.Element(hex: Hex("FF0000"))
+    #expect(plain.dark == nil)
+  }
+
 }

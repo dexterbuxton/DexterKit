@@ -50,6 +50,11 @@ let package = Package(
       name: "CustomControls",
       dependencies: ["Extensions", "CustomColors"],
       plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
-    )
+    ),
+    .testTarget(
+      name: "CustomControlsTests",
+      dependencies: ["CustomControls"],
+      plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
+    ),
   ]
 )

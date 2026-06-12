@@ -37,11 +37,24 @@ extension HSB {
   }
 }
 
+/// Converts a `Palette.Element.Value` to a SwiftUI `Color`.
+extension Palette.Element.Value {
+
+  /// A SwiftUI `Color` for this single value, in whatever representation it holds.
+  public var color: Color {
+    rgbValue.color
+  }
+}
+
 /// Converts a `Palette.Element` to a SwiftUI `Color`.
 extension Palette.Element {
 
-  /// A SwiftUI `Color` for the entry, in whatever representation it holds.
+  /// A SwiftUI `Color` for the entry.
+  ///
+  /// When the entry carries a `dark` variant, this is a dynamic color that
+  /// resolves per color scheme; otherwise it is the single `value` color.
   public var color: Color {
-    rgbValue.color
+    guard let dark else { return value.color }
+    return Color(light: value.color, dark: dark.color)
   }
 }
