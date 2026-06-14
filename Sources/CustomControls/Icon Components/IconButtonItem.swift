@@ -50,9 +50,26 @@ public struct IconButtonItem {
   let type: IconType?
   let accentColor: Color?
   let isDisabled: Bool
+  let isEmpty: Bool
   let action: () -> Void
 
   // MARK: Initialization
+
+  /// An empty slot that reserves a button's worth of space but renders nothing.
+  ///
+  /// Keeps the surrounding buttons' widths and alignment unchanged — the spacer
+  /// still counts as a slot, so the group's layout is identical to a full row.
+  public static var spacer: IconButtonItem { IconButtonItem() }
+
+  /// Creates an empty spacer slot.
+  public init() {
+    self.icon = nil
+    self.type = nil
+    self.accentColor = nil
+    self.isDisabled = true
+    self.isEmpty = true
+    self.action = {}
+  }
 
   /// Creates a slot with an explicit `Icon`, using its own color.
   public init(_ icon: Icon, isDisabled: Bool = false, action: @escaping () -> Void) {
@@ -60,6 +77,7 @@ public struct IconButtonItem {
     self.type = nil
     self.accentColor = nil
     self.isDisabled = isDisabled
+    self.isEmpty = false
     self.action = action
   }
 
@@ -69,6 +87,7 @@ public struct IconButtonItem {
     self.type = type
     self.accentColor = accentColor
     self.isDisabled = isDisabled
+    self.isEmpty = false
     self.action = action
   }
 

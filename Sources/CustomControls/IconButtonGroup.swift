@@ -85,19 +85,25 @@ public struct IconButtonGroup: View {
     HStack(spacing: style.spacing) {
       ForEach(Array(items.indices), id: \.self) { index in
         let item = items[index]
-        let icon = item.resolvedIcon(defaultColor: iconColor)
-        Button(action: item.action) {
-          IconView(icon, size: size * CustomButtonConfiguration.iconSizeRatio)
-            .scaleEffect(viewModel.animatingButtonIndex == index ? groupedIconScale : CustomButtonConfiguration.normalIconScale)
-            .animation(.easeOut(duration: CustomButtonConfiguration.iconScaleAnimationDuration), value: viewModel.animatingButtonIndex)
+        if item.isEmpty {
+          Color.clear
             .frame(width: size, height: size)
-            .contentShape(Rectangle())
         }
-        .opacity(resolvedOpacity(for: index, isDisabled: item.isDisabled))
-        .animation(.easeOut(duration: CustomButtonConfiguration.iconAnimationDuration), value: viewModel.isButtonPressed(at: index))
-        .disabled(item.isDisabled)
-        .accessibilityLabel(icon.type.accessibilityLabel)
-        .buttonStyle(CustomGroupButtonPressStyle(index: index, viewModel: viewModel))
+        else {
+          let icon = item.resolvedIcon(defaultColor: iconColor)
+          Button(action: item.action) {
+            IconView(icon, size: size * CustomButtonConfiguration.iconSizeRatio)
+              .scaleEffect(viewModel.animatingButtonIndex == index ? groupedIconScale : CustomButtonConfiguration.normalIconScale)
+              .animation(.easeOut(duration: CustomButtonConfiguration.iconScaleAnimationDuration), value: viewModel.animatingButtonIndex)
+              .frame(width: size, height: size)
+              .contentShape(Rectangle())
+          }
+          .opacity(resolvedOpacity(for: index, isDisabled: item.isDisabled))
+          .animation(.easeOut(duration: CustomButtonConfiguration.iconAnimationDuration), value: viewModel.isButtonPressed(at: index))
+          .disabled(item.isDisabled)
+          .accessibilityLabel(icon.type.accessibilityLabel)
+          .buttonStyle(CustomGroupButtonPressStyle(index: index, viewModel: viewModel))
+        }
       }
     }
     .frame(height: size)
@@ -197,8 +203,8 @@ public struct IconButtonGroup: View {
 #Preview("Icon Button Group") {
   VStack(alignment: .leading, spacing: 24) {
     IconButtonGroup {
-      IconButtonItem(.minus, action: {})
-      IconButtonItem(.plus, action: {})
+      IconButtonItem(.undo, action: {})
+      IconButtonItem(.redo, action: {})
     }
 
     IconButtonGroup {
@@ -214,7 +220,14 @@ public struct IconButtonGroup: View {
         IconButtonItem(.undo, action: {})
         IconButtonItem(.redo, action: {})
       }
-      IconButton(.delete, style: .rectangle, color: .primary, accentColor: .red, action: {})
+      IconButton(.delete, style: .rectangle, color: .red, action: {})
+    }
+
+    // Spacer slot — reserves a button's space without rendering one.
+    IconButtonGroup(style: .rectangle(spacing: 8)) {
+      IconButtonItem(.back, action: {})
+      IconButtonItem.spacer
+      IconButtonItem(.forward, action: {})
     }
   }
   .padding()

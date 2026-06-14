@@ -106,17 +106,20 @@ public struct IconView: View {
 #Preview("Accent Color") {
   // Accent color is the secondary palette layer, so it only shows on multi-layer
   // SF Symbols; single-layer symbols render in the primary color alone.
-  let layered: [IconType] = [.toggleOn, .toggleOff, .clear, .delete, .gridDivisorOn, .gridDivisorOff]
+  let layered: [IconType] = [.toggleOn, .toggleOff, .copyReady, .gridOn, .gridDivisorOn, .dots]
 
   return VStack(spacing: 16) {
     HStack(spacing: 16) {
       ForEach(layered, id: \.self) { icon in
-        IconView(Icon(icon, color: .primary, accentColor: .red), size: 28)
+        IconView(Icon(icon, color: .primary, accentColor: .blue), size: 28)
           .frame(width: 44, height: 44)
           .background(Color.primary.opacity(0.08))
           .clipShape(RoundedRectangle(cornerRadius: 10))
       }
     }
+    Text("Accent (blue) appears on multi-layer symbols")
+      .font(.caption)
+      .foregroundStyle(.secondary)
   }
   .padding()
 }

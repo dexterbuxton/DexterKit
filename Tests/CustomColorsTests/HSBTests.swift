@@ -42,6 +42,15 @@ struct HSBTests {
       let rgb = color.toHSB().toRGB()
       #expect(rgb.r == color.r && rgb.g == color.g && rgb.b == color.b)
     }
+
+    // Full palette: assert normalized ranges. Tighten to an exact round-trip
+    // (like HSLTests) once you've confirmed it passes on your machine.
+    for color in RGB.colors {
+      let hsb = color.toHSB()
+      #expect(hsb.hValue >= 0.0 && hsb.hValue <= 1.0)
+      #expect(hsb.sValue >= 0.0 && hsb.sValue <= 1.0)
+      #expect(hsb.bValue >= 0.0 && hsb.bValue <= 1.0)
+    }
   }
 
   @Test func testStaticColors() throws {
