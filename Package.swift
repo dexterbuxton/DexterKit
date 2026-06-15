@@ -55,6 +55,6 @@ let package = Package(
       name: "CustomControlsTests",
       dependencies: ["CustomControls"],
       plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
-    ),
+    )
   ]
 )

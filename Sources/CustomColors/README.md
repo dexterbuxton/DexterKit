@@ -1,63 +1,121 @@
-# CustomColors
+# DexterKit
 
-Color models, conversions, SwiftUI bridges, and a `Palette` type for building and storing curated color sets.
+A small, focused suite of SwiftUI building blocks — color models, custom sliders, and tappable controls — packaged as a single Swift Package. DexterKit consolidates several older standalone libraries into one well-tested, modular target set.
 
-- **Dependencies:** `Extensions`
-- **Platforms:** iOS 26, macOS 26
+**Platforms:** iOS 26+ · macOS 26+  ·  **Swift:** 6.2  ·  **Tests:** Swift Testing
 
-## Color Models
+## Modules
 
-`RGB`, `Hex`, `HSL`, and `HSB` are value types that convert between one another. Each is `Hashable` and `Sendable`.
+DexterKit ships four independent library products. Import only what you need.
+
+| Product | What it gives you |
+| --- | --- |
+| `Extensions` | Lightweight standard-library helpers: `Int` (gcd/lcm), `Array` (`chunked(into:)`, `removingDuplicates()`, `toJoinedString`), value `normalized()`/`clamp`, and `BinaryFloatingPoint.shortened`. |
+| `CustomColors` | Value-type color models — `RGB`, `HSB`, `HSL`, `Hex` — with conversions between them, a `Palette` type with ready-made palettes, and `Color` bridges. |
+| `CustomSliders` | `BasicSlider` and `GradientSlider`, plus their composable `ThumbView` / `TrackView` building blocks. |
+| `CustomControls` | Tappable controls with a consistent press feel: `CustomContentButton`, `CustomIndicatorButton`, and a grid `PalettePicker`. |
+
+`CustomColors`, `CustomSliders`, and `CustomControls` build on `Extensions` internally; you don't need to import it unless you want its helpers directly.
+
+## Installation
+
+DexterKit is distributed with Swift Package Manager.
+
+### Xcode
+
+1. **File → Add Package Dependencies…**
+2. Enter the repository URL:
+   ```
+   https://github.com/DexterBuxton/DexterKit.git
+   ```
+3. Choose the **Up to Next Major Version** rule from `1.0.0`.
+4. Add the products you need to your target.
+
+### Package.swift
 
 ```swift
+dependencies: [
+  .package(url: "https://github.com/DexterBuxton/DexterKit.git", from: "1.0.0")
+],
+targets: [
+  .target(
+    name: "YourTarget",
+    dependencies: [
+      .product(name: "CustomColors", package: "DexterKit"),
+      .product(name: "CustomSliders", package: "DexterKit")
+    ]
+  )
+]
+```
+
+## Usage
+
+### CustomColors
+
+```swift
+import SwiftUI
 import CustomColors
 
-let red = RGB(r: 244, g: 67, b: 54)
-let hex = Hex("F44336")
+let blue = RGB(hex: "4D9BE6")
+let swatch = RoundedRectangle(cornerRadius: 10)
+  .foregroundStyle(blue.color)
 
-red.toHSL()          // HSL
-hex.rgb              // RGB
-hex.isLight          // false  (perceptual lightness)
-RGB(hex: "2196F3")   // from a hex string
+// Convert freely between models.
+let hsb = blue.toHSB()
+let hex = hsb.toHex()        // Hex("4D9BE6")
 ```
 
-## SwiftUI Bridges
-
-`Color+Extensions` adds a `.color` property to every model.
+### CustomSliders
 
 ```swift
-Hex("FF9800").color          // SwiftUI Color
-RGB(r: 0, g: 122, b: 255).color
+import SwiftUI
+import CustomSliders
+
+struct Demo: View {
+  @State private var value = 0.5
+
+  var body: some View {
+    BasicSlider(value: $value, step: 0.1)
+      .trackForeground(.blue)
+
+    GradientSlider(value: $value, colorLeading: .pink, colorTrailing: .cyan)
+  }
+}
 ```
 
-## Adaptive Colors
-
-`Color+Adaptive` adds a code-only light/dark color — no asset catalog required.
+### CustomControls
 
 ```swift
-Color(light: .white, dark: .black)   // resolves per color scheme
+import SwiftUI
+import CustomColors
+import CustomControls
+
+struct PaletteDemo: View {
+  @State private var selection: Palette.Element.ID?
+
+  var body: some View {
+    PalettePicker(palette: .material, selection: $selection)
+  }
+}
 ```
 
-## Palette
-
-`Palette` is a named, ordered collection of `Palette.Element`s. Each element is a color in any representation (`Hex`/`RGB`/`HSB`), optionally named, optionally carrying a dark-mode variant. Selection-friendly: every element has a stable `id`.
+### Extensions
 
 ```swift
-var palette = Palette(name: "Brand")
-palette.add(Hex("FF3B30"), name: "Red")
-palette.add(Hex("FFFFFF"), name: "Background", dark: Hex("000000"))  // adaptive
+import Extensions
 
-palette.entries.first?.color       // SwiftUI Color (adapts if a dark variant exists)
-palette.entries.first?.hexValue    // Hex (light / default)
+[1, 2, 3, 4, 5].chunked(into: 2)   // [[1, 2], [3, 4], [5]]
+(0.5).shortened                    // "0.50"
 ```
 
-Ready-made palettes live in `PaletteExamples`:
+## Testing
 
-```swift
-Palette.material   // 16 named Material swatches
-Palette.standard   // built from RGB.colors (unnamed)
+The package is covered by [Swift Testing](https://developer.apple.com/documentation/testing). Run the full suite with:
+
+```bash
+swift test
 ```
 
-## Notes
+## License
 
-`Palette.Element.Value` carries the per-representation conversions, so both the light value and an optional dark override convert uniformly (`element.hexValue`, `element.dark?.hexValue`).
+DexterKit is available under the MIT License. See [LICENSE](LICENSE) for details.
