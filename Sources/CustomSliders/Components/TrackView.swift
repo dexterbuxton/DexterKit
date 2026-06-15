@@ -5,7 +5,7 @@ import Extensions
 /// typically used for sliders or progress indicators.
 ///
 /// The `TrackView` displays a track with a specified percentage of foreground fill,
-/// customizable colors, height, and thumb size.
+/// customizable colors, height, thumb size, and an optional border.
 ///
 struct TrackView: View {
   // MARK: Properties
@@ -27,6 +27,14 @@ struct TrackView: View {
   /// The size of the thumb, which affects the foreground width calculation.
   private let thumbSize: CGFloat
 
+  /// The color of the track's border.
+  private let borderColor: Color
+
+  /// The width of the track's border.
+  ///
+  /// The border is drawn inset, so it never extends beyond the track's bounds.
+  private let lineWidth: CGFloat
+
   // MARK: Initializer
 
   /// Creates a new `TrackView` with the specified parameters.
@@ -37,18 +45,24 @@ struct TrackView: View {
   ///   - colorBackground: The color of the background. Defaults to a light gray.
   ///   - trackHeight: The height of the track. Defaults to `10`.
   ///   - thumbSize: The size of the thumb. Defaults to `30`.
+  ///   - borderColor: The border color. Defaults to `.separator` (a translucent hairline).
+  ///   - lineWidth: The width of the border. Defaults to `0` (off).
   init(
     percent: CGFloat,
     colorForeground: Color = .red,
     colorBackground: Color = Color.init(white: 0.8),
     trackHeight: CGFloat = 10,
-    thumbSize: CGFloat = 30
+    thumbSize: CGFloat = 30,
+    borderColor: Color = .separator,
+    lineWidth: CGFloat = 0
   ) {
     self.percent = (0...1).clamp(percent)
     self.colorForeground = colorForeground
     self.colorBackground = colorBackground
     self.trackHeight = trackHeight
     self.thumbSize = thumbSize
+    self.borderColor = borderColor
+    self.lineWidth = lineWidth
   }
 
   // MARK: Views
@@ -69,6 +83,14 @@ struct TrackView: View {
       .fill(colorForeground)
   }
 
+  /// The border overlay of the track.
+  ///
+  /// Traces the capsule edge with an inset stroke so it stays within bounds.
+  var trackBorder: some View {
+    Capsule()
+      .strokeBorder(borderColor, lineWidth: lineWidth)
+  }
+
   /// The main body of the `TrackView`.
   ///
   /// This view uses a `GeometryReader` to calculate the width of the foreground
@@ -82,6 +104,7 @@ struct TrackView: View {
           .frame(width: foregroundWidth(from: width))
       }
       .mask(Capsule())
+      .overlay(trackBorder)
     }
     .frame(height: trackHeight)
   }
@@ -110,5 +133,16 @@ struct TrackView: View {
     TrackView(percent: 0.2)
     TrackView(percent: 0.0)
   }
+  .padding()
+}
+
+#Preview("Track - Modified") {
+  TrackView(
+    percent: 0.6,
+    colorForeground: .blue,
+    trackHeight: 25,
+    borderColor: .blue,
+    lineWidth: 4
+  )
   .padding()
 }

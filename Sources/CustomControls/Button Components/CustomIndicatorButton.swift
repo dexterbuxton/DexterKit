@@ -1,4 +1,5 @@
 import SwiftUI
+import Extensions
 
 /// A tappable button displaying a dot indicator, driven by a `Bool` binding.
 ///
@@ -23,6 +24,8 @@ public struct CustomIndicatorButton: View {
   private let color: Color
   private let dotColor: Color
   private let dotScale: CGFloat
+  private let borderColor: Color
+  private let lineWidth: CGFloat
 
   @Binding private var isOn: Bool
 
@@ -35,7 +38,9 @@ public struct CustomIndicatorButton: View {
     size: CGFloat = CustomButtonConfiguration.buttonSize,
     color: Color,
     dotColor: Color,
-    dotScale: CGFloat = CustomButtonConfiguration.indicatorDotRatio
+    dotScale: CGFloat = CustomButtonConfiguration.indicatorDotRatio,
+    borderColor: Color = .separator,
+    lineWidth: CGFloat = 0
   ) {
     self.init(
       isOn: isOn,
@@ -44,7 +49,9 @@ public struct CustomIndicatorButton: View {
       height: size,
       color: color,
       dotColor: dotColor,
-      dotScale: dotScale
+      dotScale: dotScale,
+      borderColor: borderColor,
+      lineWidth: lineWidth
     )
   }
 
@@ -56,7 +63,9 @@ public struct CustomIndicatorButton: View {
     height: CGFloat,
     color: Color,
     dotColor: Color,
-    dotScale: CGFloat = CustomButtonConfiguration.indicatorDotRatio
+    dotScale: CGFloat = CustomButtonConfiguration.indicatorDotRatio,
+    borderColor: Color = .separator,
+    lineWidth: CGFloat = 0
   ) {
     self._isOn = isOn
     self.style = style
@@ -65,6 +74,8 @@ public struct CustomIndicatorButton: View {
     self.color = color
     self.dotColor = dotColor
     self.dotScale = dotScale
+    self.borderColor = borderColor
+    self.lineWidth = lineWidth
   }
 
   // MARK: Computed Helpers
@@ -90,6 +101,10 @@ public struct CustomIndicatorButton: View {
         .background(
           RoundedRectangle(cornerRadius: CustomButtonConfiguration.cornerRadius(for: style))
             .fill(color)
+        )
+        .overlay(
+          RoundedRectangle(cornerRadius: CustomButtonConfiguration.cornerRadius(for: style))
+            .strokeBorder(borderColor, lineWidth: lineWidth)
         )
     }
     .buttonStyle(CustomButtonPressStyle())
@@ -118,6 +133,24 @@ public struct CustomIndicatorButton: View {
           color: .orange,
           dotColor: .black
         )
+        // Bordered examples.
+        HStack(spacing: 16) {
+          CustomIndicatorButton(
+            isOn: .constant(true),
+            color: .white,
+            dotColor: .black,
+            borderColor: .black.opacity(0.25),
+            lineWidth: 2
+          )
+          CustomIndicatorButton(
+            isOn: .constant(false),
+            style: .rectangle,
+            color: .yellow,
+            dotColor: .black,
+            borderColor: .orange,
+            lineWidth: 2
+          )
+        }
       }
       .padding()
     }

@@ -1,4 +1,5 @@
 import SwiftUI
+import Extensions
 
 /// A customizable thumb view for sliders or other UI components.
 ///
@@ -13,11 +14,11 @@ struct ThumbView: View {
   /// The fill color of the thumb view.
   private let color: Color
 
-  /// The width of the border around the thumb view.
-  private let lineWidth: CGFloat
-
   /// The color of the border around the thumb view.
   private let borderColor: Color
+
+  /// The width of the border around the thumb view.
+  private let lineWidth: CGFloat
 
   /// A state variable indicating whether the thumb view is selected.
   @State private var isSelected: Bool = false
@@ -34,18 +35,18 @@ struct ThumbView: View {
   /// - Parameters:
   ///   - size: The size of the thumb view. Default is `40`.
   ///   - color: The fill color of the thumb view. Default is a gray color.
-  ///   - lineWidth: The width of the border around the thumb view. Default is `3`.
-  ///   - borderColor: The color of the border around the thumb view. Default is white.
+  ///   - borderColor: The border color. Defaults to `.systemBackground` (reads as a cutout).
+  ///   - lineWidth: The width of the border. Default is `3`.
   init(
     size: CGFloat = 40,
     color: Color = Color.init(white: 0.6),
-    lineWidth: CGFloat = 3,
-    borderColor: Color = .white
+    borderColor: Color = .systemBackground,
+    lineWidth: CGFloat = 3
   ) {
     self.size = size
     self.color = color
-    self.lineWidth = lineWidth
     self.borderColor = borderColor
+    self.lineWidth = lineWidth
   }
 
   // MARK: Views
@@ -108,26 +109,26 @@ struct ThumbView: View {
     ThumbView(
       size: 35,
       color: .cyan,
-      lineWidth: 15,
-      borderColor: .cyan.opacity(0.2)
+      borderColor: .cyan.opacity(0.2),
+      lineWidth: 15
     )
     ThumbView(
       size: 35,
       color: .pink,
-      lineWidth: 15,
-      borderColor: .pink.opacity(0.2)
+      borderColor: .pink.opacity(0.2),
+      lineWidth: 15
     )
     ThumbView(
       size: 35,
       color: .yellow,
-      lineWidth: 15,
-      borderColor: .yellow.opacity(0.3)
+      borderColor: .yellow.opacity(0.3),
+      lineWidth: 15
     )
     ThumbView(
       size: 35,
       color: .black,
-      lineWidth: 15,
-      borderColor: .black.opacity(0.15)
+      borderColor: .black.opacity(0.15),
+      lineWidth: 15
     )
   }
   .padding()

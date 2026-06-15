@@ -1,4 +1,5 @@
 import SwiftUI
+import Extensions
 
 /// A view that represents a gradient thumb with customizable colors, size, and border.
 ///
@@ -17,14 +18,14 @@ struct GradientThumbView: View {
   /// The trailing color of the gradient.
   private let colorTrailing: Color
 
-  /// The width of the border stroke.
-  private let lineWidth: CGFloat
+  /// The percentage of the trailing color's opacity.
+  private let percent: Double
 
   /// The color of the border stroke.
   private let borderColor: Color
 
-  /// The percentage of the trailing color's opacity.
-  private let percent: Double
+  /// The width of the border stroke.
+  private let lineWidth: CGFloat
 
   /// A state variable indicating whether the thumb is selected.
   @State private var isSelected: Bool = false
@@ -42,23 +43,23 @@ struct GradientThumbView: View {
   ///   - size: The size of the thumb view. Defaults to `35`.
   ///   - colorLeading: The leading color of the gradient.
   ///   - colorTrailing: The trailing color of the gradient.
-  ///   - lineWidth: The width of the border stroke. Defaults to `3`.
-  ///   - borderColor: The color of the border stroke. Defaults to `.white`.
   ///   - percent: The percentage of the trailing color's opacity.
+  ///   - borderColor: The border color. Defaults to `.systemBackground` (reads as a cutout).
+  ///   - lineWidth: The width of the border. Defaults to `3`.
   init(
     size: CGFloat = 35,
     colorLeading: Color,
     colorTrailing: Color,
-    lineWidth: CGFloat = 3,
-    borderColor: Color = .white,
-    percent: Double
+    percent: Double,
+    borderColor: Color = .systemBackground,
+    lineWidth: CGFloat = 3
   ) {
     self.size = size
     self.colorLeading = colorLeading
     self.colorTrailing = colorTrailing
-    self.lineWidth = lineWidth
-    self.borderColor = borderColor
     self.percent = percent
+    self.borderColor = borderColor
+    self.lineWidth = lineWidth
   }
 
   // MARK: Views
@@ -107,32 +108,17 @@ struct GradientThumbView: View {
 }
 
 #Preview("Gradient Thumb Views") {
-  /// A preview showcasing multiple `GradientThumbView` instances with varying opacity percentages.
-  HStack {
+  /// A preview showcasing `GradientThumbView` across the percent range, plus a bordered example.
+  HStack(spacing: 20) {
+    GradientThumbView(colorLeading: .blue, colorTrailing: .red, percent: 0.0)
+    GradientThumbView(colorLeading: .blue, colorTrailing: .red, percent: 0.5)
+    GradientThumbView(colorLeading: .blue, colorTrailing: .red, percent: 1.0)
     GradientThumbView(
       colorLeading: .blue,
       colorTrailing: .red,
-      percent: 0.0
-    )
-    GradientThumbView(
-      colorLeading: .blue,
-      colorTrailing: .red,
-      percent: 0.25
-    )
-    GradientThumbView(
-      colorLeading: .blue,
-      colorTrailing: .red,
-      percent: 0.5
-    )
-    GradientThumbView(
-      colorLeading: .blue,
-      colorTrailing: .red,
-      percent: 0.75
-    )
-    GradientThumbView(
-      colorLeading: .blue,
-      colorTrailing: .red,
-      percent: 1.0
+      percent: 0.5,
+      borderColor: .white,
+      lineWidth: 3
     )
   }
   .padding()

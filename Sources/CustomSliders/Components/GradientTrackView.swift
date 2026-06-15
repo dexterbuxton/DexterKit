@@ -1,6 +1,7 @@
 import SwiftUI
+import Extensions
 
-/// A view that represents a gradient track with customizable colors and height.
+/// A view that represents a gradient track with customizable colors, height, and border.
 ///
 /// The `GradientTrackView` is a rectangular view that displays a gradient effect
 /// using a linear gradient with specified colors and a capsule mask.
@@ -14,6 +15,14 @@ struct GradientTrackView: View {
   /// The height of the gradient track.
   private let trackHeight: CGFloat
 
+  /// The color of the track's border.
+  private let borderColor: Color
+
+  /// The width of the track's border.
+  ///
+  /// The border is drawn inset, so it never extends beyond the track's bounds.
+  private let lineWidth: CGFloat
+
   // MARK: Initializer
 
   /// Creates a new `GradientTrackView` with the specified properties.
@@ -21,12 +30,18 @@ struct GradientTrackView: View {
   /// - Parameters:
   ///   - colors: The array of colors used to create the gradient.
   ///   - trackHeight: The height of the gradient track. Defaults to `10`.
+  ///   - borderColor: The border color. Defaults to `.separator` (a translucent hairline).
+  ///   - lineWidth: The width of the border. Defaults to `0` (off).
   init(
     colors: [Color],
-    trackHeight: CGFloat = 10
+    trackHeight: CGFloat = 10,
+    borderColor: Color = .separator,
+    lineWidth: CGFloat = 0
   ) {
     self.colors = colors
     self.trackHeight = trackHeight
+    self.borderColor = borderColor
+    self.lineWidth = lineWidth
   }
 
   // MARK: Views
@@ -39,6 +54,14 @@ struct GradientTrackView: View {
     LinearGradient(colors: colors, startPoint: .leading, endPoint: .trailing)
   }
 
+  /// The border overlay of the track.
+  ///
+  /// Traces the capsule edge with an inset stroke so it stays within bounds.
+  var trackBorder: some View {
+    Capsule()
+      .strokeBorder(borderColor, lineWidth: lineWidth)
+  }
+
   /// The content and behavior of the `GradientTrackView`.
   ///
   /// This view displays the gradient with a capsule mask and a specified height.
@@ -46,6 +69,7 @@ struct GradientTrackView: View {
     gradient
       .mask(Capsule())
       .frame(height: trackHeight)
+      .overlay(trackBorder)
   }
 }
 
@@ -62,6 +86,14 @@ struct GradientTrackView: View {
     GradientTrackView(colors: [.black, .init(white: 0.9)])
     GradientTrackView(colors: [.cyan, .pink])
     GradientTrackView(colors: rainbowHues)
+
+    // Bordere example
+    GradientTrackView(
+      colors: [.green, .yellow],
+      trackHeight: 25,
+      borderColor: .green,
+      lineWidth: 3
+    )
   }
   .padding()
 }

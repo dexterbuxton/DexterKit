@@ -17,6 +17,26 @@ public struct BasicSlider: View {
   /// The background color of the slider's track.
   private var trackBackground = Color.init(white: 0.8)
 
+  /// The border color of the slider's thumb.
+  ///
+  /// Defaults to the system background so the ring reads as a cutout — the
+  /// surface behind the slider showing through.
+  private var thumbBorderColor: Color = .systemBackground
+
+  /// The border width of the slider's thumb. On by default.
+  private var thumbBorderWidth: CGFloat = 3
+
+  /// The border color of the slider's track.
+  ///
+  /// Pre-set to `.separator`, but disabled (width `0`) until a width is given.
+  private var trackBorderColor: Color = .separator
+
+  /// The border width of the slider's track. Off (`0`) by default.
+  private var trackBorderWidth: CGFloat = 0
+
+  /// The height (thickness) of the slider's track.
+  private var trackHeight: CGFloat
+
   /// A flag indicating whether the slider is currently being moved.
   @State private var isMoving = false
 
@@ -32,13 +52,16 @@ public struct BasicSlider: View {
   ///   - range: The range of values the slider can represent. Defaults to `0...1`.
   ///   - step: The step value for the slider. Defaults to `0.1`.
   ///   - thumbSize: The size of the slider's thumb. Defaults to `30`.
+  ///   - trackHeight: The thickness of the slider's track. Defaults to `10`.
   init(
     value: Binding<Double>,
     in range: ClosedRange<Double> = 0...1,
     step: Double = 0.1,
-    thumbSize: CGFloat = 30
+    thumbSize: CGFloat = 30,
+    trackHeight: CGFloat = 10
   ) {
     self._value = value
+    self.trackHeight = trackHeight
     _config = StateObject(
       wrappedValue: SliderConfig(
         value: value.wrappedValue,
@@ -59,12 +82,17 @@ public struct BasicSlider: View {
           percent: config.percent,
           colorForeground: trackForeground,
           colorBackground: trackBackground,
-          thumbSize: config.thumbSize
+          trackHeight: trackHeight,
+          thumbSize: config.thumbSize,
+          borderColor: trackBorderColor,
+          lineWidth: trackBorderWidth
         )
         .simultaneousGesture(tapGesture(given: reader.size.width))
         ThumbView(
           size: CGFloat(config.thumbSize),
-          color: thumbColor
+          color: thumbColor,
+          borderColor: thumbBorderColor,
+          lineWidth: thumbBorderWidth
         )
         .position(config.position(given: reader.size.width))
         .simultaneousGesture(moveGesture(given: reader.size.width))
@@ -134,21 +162,73 @@ public struct BasicSlider: View {
   public func trackBackground(_ value: Color) -> Self {
     return self.modifying(\.trackBackground, value: value)
   }
+
+  /// Sets the slider's colors in one call.
+  ///
+  /// Any parameter left `nil` is left unchanged, so you can set one, two, or all three.
+  ///
+  /// - Parameters:
+  ///   - thumb: The thumb fill color.
+  ///   - tint: The track's filled (foreground) color.
+  ///   - track: The track's unfilled (background) color.
+  /// - Returns: A modified `BasicSlider` with the specified colors.
+  public func color(thumb: Color? = nil, tint: Color? = nil, track: Color? = nil) -> Self {
+    var copy = self
+    if let thumb { copy.thumbColor = thumb }
+    if let tint { copy.trackForeground = tint }
+    if let track { copy.trackBackground = track }
+    return copy
+  }
+
+  /// Enables and styles the slider's track border.
+  ///
+  /// Defaults to a `.separator` hairline, so `trackBorder()` turns on a sensible
+  /// adaptive border with no arguments.
+  ///
+  /// - Parameters:
+  ///   - color: The track border color. Defaults to `.separator`.
+  ///   - lineWidth: The track border width. Defaults to `1`.
+  /// - Returns: A modified `BasicSlider` with the specified track border.
+  public func trackBorder(_ color: Color = .separator, lineWidth: CGFloat = 1) -> Self {
+    return self.modifying(\.trackBorderColor, value: color)
+      .modifying(\.trackBorderWidth, value: lineWidth)
+  }
+
+  /// Sets the slider's thumb border.
+  ///
+  /// Defaults to the `.systemBackground` cutout ring already applied by default.
+  ///
+  /// - Parameters:
+  ///   - color: The thumb border color. Defaults to `.systemBackground`.
+  ///   - lineWidth: The thumb border width. Defaults to `3`.
+  /// - Returns: A modified `BasicSlider` with the specified thumb border.
+  public func thumbBorder(_ color: Color = .systemBackground, lineWidth: CGFloat = 3) -> Self {
+    return self.modifying(\.thumbBorderColor, value: color)
+      .modifying(\.thumbBorderWidth, value: lineWidth)
+  }
 }
 
 #Preview("Sliders") {
   /// A preview showcasing multiple `BasicSlider` instances with different values.
   VStack(spacing: 30) {
-    BasicSlider(value: .constant(0.0))
-      .trackForeground(.black)
-      .thumbColor(.black)
+    BasicSlider(value: .constant(0.85))
+      .color(tint: .red)
     BasicSlider(value: .constant(0.25))
-      .trackForeground(.purple)
-    BasicSlider(value: .constant(0.5))
-      .trackForeground(.green)
-    BasicSlider(value: .constant(0.75))
-      .trackForeground(.red)
-    BasicSlider(value: .constant(1.0))
+      .color(tint: .green)
+    BasicSlider(value: .constant(0.65))
+      .color(tint: .blue)
   }
   .padding()
+}
+
+#Preview("Sliders - Modified") {
+  BasicSlider(
+    value: .constant(0.65),
+    thumbSize: 40,
+    trackHeight: 25
+  )
+    .color(thumb: .white, tint: .black, track: .red)
+    .thumbBorder(.red, lineWidth: 5)
+    .trackBorder(.red, lineWidth: 5)
+    .padding()
 }
