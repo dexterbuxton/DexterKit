@@ -13,7 +13,7 @@ DexterKit ships four independent library products. Import only what you need.
 | `Extensions` | Lightweight standard-library helpers: `Int` (gcd/lcm), `Array` (`chunked(into:)`, `removingDuplicates()`, `toJoinedString`), value `normalized()`/`clamp`, and `BinaryFloatingPoint.shortened`. |
 | `CustomColors` | Value-type color models — `RGB`, `HSB`, `HSL`, `Hex` — with conversions between them, a `Palette` type with ready-made palettes, and `Color` bridges. |
 | `CustomSliders` | `BasicSlider` and `GradientSlider`, plus their composable `ThumbView` / `TrackView` building blocks. |
-| `CustomControls` | Tappable controls with a consistent press feel: `CustomContentButton`, `CustomIndicatorButton`, and a grid `PalettePicker`. |
+| `CustomControls` | Tappable controls with a consistent press feel: `CustomContentButton`, an icon-button system (`IconButton`, `IconButtonGroup`, `IconToggleButton`), and a grid `PalettePicker`. |
 
 `CustomColors`, `CustomSliders`, and `CustomControls` build on `Extensions` internally; you don't need to import it unless you want its helpers directly.
 

@@ -2,34 +2,57 @@ import SwiftUI
 
 // MARK: Icon
 
-/// A lightweight value identifying an icon and its colors.
+/// A lightweight value identifying a symbol and its colors, ready to render.
 ///
-/// Use `Icon` to pass icon data around independently — storing it in a model or
-/// handing it between views. For rendering, use `IconView`.
+/// `Icon` is the *resolved* form of an `IconRepresentable`: it carries the
+/// symbol name and accessibility label as plain values plus the colors to draw
+/// them in, so it can be stored in a model or handed between views without any
+/// generic baggage. For rendering, use `IconView`.
 ///
 /// ```swift
-/// Icon(.undo, color: .primary)
-/// Icon(.delete, color: .red)
-/// Icon(.gridOn, color: .primary, accentColor: .blue)
+/// Icon(IconType.undo, color: .primary)
+/// Icon(IconType.delete, color: .red)
+/// Icon(EmptyIcon(), color: .primary)        // renders nothing
 /// ```
 public struct Icon: Hashable, Sendable {
 
   // MARK: Properties
 
-  public let type: IconType
+  /// The SF Symbol name, or `nil` to render nothing.
+  public let symbolName: String?
+
+  /// The VoiceOver label for this symbol.
+  public let accessibilityLabel: String
+
+  /// The primary icon color.
   public let color: Color
+
+  /// Optional secondary color for two-tone SF Symbols.
   public let accentColor: Color?
+
+  /// Whether this icon renders nothing.
+  public var isEmpty: Bool { symbolName == nil }
 
   // MARK: Initialization
 
-  /// Creates an icon value.
+  /// Creates an icon from any symbol identity.
   ///
   /// - Parameters:
-  ///   - type: The icon type to display.
+  ///   - symbol: The symbol identity (e.g. an `IconType` or a custom conformer).
   ///   - color: The primary icon color.
   ///   - accentColor: Optional secondary color for two-tone SF Symbols.
-  public init(_ type: IconType, color: Color, accentColor: Color? = nil) {
-    self.type = type
+  public init(_ symbol: some IconRepresentable, color: Color, accentColor: Color? = nil) {
+    self.symbolName = symbol.symbolName
+    self.accessibilityLabel = symbol.accessibilityLabel
+    self.color = color
+    self.accentColor = accentColor
+  }
+
+  /// Builds an icon directly from resolved fields. Internal plumbing for the
+  /// button views, which resolve colors against the theme before rendering.
+  init(symbolName: String?, accessibilityLabel: String, color: Color, accentColor: Color?) {
+    self.symbolName = symbolName
+    self.accessibilityLabel = accessibilityLabel
     self.color = color
     self.accentColor = accentColor
   }
@@ -39,12 +62,13 @@ public struct Icon: Hashable, Sendable {
 
 /// Renders an `Icon` at a given size and weight.
 ///
-/// Purely visual — no frame, no background, no tap handling. Use `IconButton`
-/// when interaction is needed.
+/// Purely visual — no frame background, no tap handling. An empty icon
+/// (`symbolName == nil`) renders a transparent box of the icon's size and is
+/// hidden from accessibility. Use `IconButton` when interaction is needed.
 ///
 /// ```swift
-/// IconView(Icon(.undo, color: .primary), size: 24)
-/// IconView(Icon(.delete, color: .red), size: 20, weight: .bold)
+/// IconView(Icon(IconType.undo, color: .primary), size: 24)
+/// IconView(Icon(IconType.delete, color: .red), size: 20, weight: .bold)
 /// ```
 public struct IconView: View {
 
@@ -71,10 +95,17 @@ public struct IconView: View {
   // MARK: Body
 
   public var body: some View {
-    Image(systemName: icon.type.systemImage)
-      .font(.system(size: size, weight: weight))
-      .symbolRenderingMode(CustomButtonConfiguration.symbolRenderingMode)
-      .foregroundStyle(icon.color, icon.accentColor ?? icon.color)
+    if let symbolName = icon.symbolName {
+      Image(systemName: symbolName)
+        .font(.system(size: size, weight: weight))
+        .symbolRenderingMode(CustomButtonConfiguration.symbolRenderingMode)
+        .foregroundStyle(icon.color, icon.accentColor ?? icon.color)
+    }
+    else {
+      Color.clear
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
+    }
   }
 }
 
@@ -103,23 +134,16 @@ public struct IconView: View {
   }
 }
 
-#Preview("Accent Color") {
-  // Accent color is the secondary palette layer, so it only shows on multi-layer
-  // SF Symbols; single-layer symbols render in the primary color alone.
-  let layered: [IconType] = [.toggleOn, .toggleOff, .copyReady, .gridOn, .gridDivisorOn, .dots]
-
-  return VStack(spacing: 16) {
-    HStack(spacing: 16) {
-      ForEach(layered, id: \.self) { icon in
-        IconView(Icon(icon, color: .primary, accentColor: .blue), size: 28)
-          .frame(width: 44, height: 44)
-          .background(Color.primary.opacity(0.08))
-          .clipShape(RoundedRectangle(cornerRadius: 10))
-      }
-    }
-    Text("Accent (blue) appears on multi-layer symbols")
-      .font(.caption)
-      .foregroundStyle(.secondary)
+#Preview("Empty Symbol") {
+  HStack(spacing: 16) {
+    IconView(Icon(IconType.done, color: .primary), size: 20)
+      .frame(width: 44, height: 44)
+      .background(Color.primary.opacity(0.08))
+      .clipShape(RoundedRectangle(cornerRadius: 10))
+    IconView(Icon(EmptyIcon(), color: .primary), size: 20)
+      .frame(width: 44, height: 44)
+      .background(Color.primary.opacity(0.08))
+      .clipShape(RoundedRectangle(cornerRadius: 10))
   }
   .padding()
 }

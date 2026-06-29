@@ -79,7 +79,7 @@ public struct RGB: Identifiable, Hashable, Sendable {
   /// Checks the visual perception of the Color (WCAG relative luminance).
   ///
   /// - Returns:`true` if the color is perceptually light.
-  var isLight: Bool {
+  public var isLight: Bool {
     func linearise(_ value: Double) -> Double {
       value <= 0.04045 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
     }

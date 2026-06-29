@@ -8,8 +8,11 @@ public struct CustomButtonPressStyle: ButtonStyle {
   @State private var isAnimating = false
   @State private var pressStartTime: Date?
   @State private var animationTask: Task<Void, Never>?
+  private let pressedReport: Binding<Bool>?
 
-  public init() {}
+  public init(isPressed: Binding<Bool>? = nil) {
+    self.pressedReport = isPressed
+  }
 
   public func makeBody(configuration: Configuration) -> some View {
     configuration.label
@@ -55,6 +58,9 @@ public struct CustomButtonPressStyle: ButtonStyle {
             pressStartTime = nil
           }
         }
+      }
+      .onChange(of: isPressed) { _, newValue in
+        pressedReport?.wrappedValue = newValue
       }
   }
 }

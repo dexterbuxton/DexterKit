@@ -1,56 +1,136 @@
 import SwiftUI
 
-/// A tappable button rendering an icon inside a styled background frame.
+/// A tappable button rendering a symbol inside a styled background frame.
 ///
-/// The background and icon colors are passed in (no theming environment), matching
-/// `CustomIndicatorButton`. Use the full initializer with an explicit `Icon`, or
-/// the convenience initializer to build one from an `IconType`.
+/// Colors come from the `IconButtonTheme` in the environment unless overridden
+/// per call, so a themed button is one line:
 ///
 /// ```swift
-/// // Convenience — icon color and background as arguments
-/// IconButton(.undo, action: undo)
-///
-/// // Full — custom Icon (e.g. a two-tone color)
-/// IconButton(Icon(.delete, color: .red), action: delete)
+/// IconButton(.undo, action: undo)                 // themed, built-in catalog
+/// IconButton(.delete, color: .red, action: delete) // per-call override
+/// IconButton(AppIcon.sparkle, action: {})          // any custom symbol
 /// ```
+///
+/// `IconType` cases keep their leading-dot spelling via a dedicated overload;
+/// any other `IconRepresentable` flows through the generic initializer. Use the
+/// `Icon` initializer when you already have a pre-coloured icon value.
 public struct IconButton: View {
 
   // MARK: Properties
 
-  private let icon: Icon
+  private let symbolName: String?
+  private let accessibilityLabel: String
+  private let accentColor: Color?
+  private let colorOverride: Color?
+  private let backgroundOverride: Color?
+  private let weightOverride: Font.Weight?
   private let style: CustomButtonStyle
   private let size: CGFloat
-  private let backgroundColor: Color
-  private let iconWeight: Font.Weight
   private let isDisabled: Bool
   private let action: () -> Void
+  @State private var isPressed = false
+
+  @Environment(\.iconButtonTheme) private var theme
 
   // MARK: Initialization
 
-  /// Creates a button with an explicit `Icon`.
-  ///
-  /// - Parameters:
-  ///   - icon: The icon to display, carrying type and color.
-  ///   - style: The background shape. Defaults to circle.
-  ///   - size: The square frame size. Defaults to `CustomButtonConfiguration.buttonSize`.
-  ///   - backgroundColor: The background fill. Defaults to an adaptive neutral.
-  ///   - iconWeight: Font weight for the icon. Defaults to `CustomButtonConfiguration.iconWeight`.
-  ///   - isDisabled: Whether the button is non-interactive. Defaults to false.
-  ///   - action: The closure to invoke on tap.
+  /// Creates a button with a pre-coloured `Icon`. The icon's color is treated as
+  /// an explicit override of the theme.
   public init(
     _ icon: Icon,
     style: CustomButtonStyle = .circle,
     size: CGFloat = CustomButtonConfiguration.buttonSize,
-    backgroundColor: Color = Color.primary.opacity(0.08),
-    iconWeight: Font.Weight = CustomButtonConfiguration.iconWeight,
+    backgroundColor: Color? = nil,
+    iconWeight: Font.Weight? = nil,
     isDisabled: Bool = false,
     action: @escaping () -> Void
   ) {
-    self.icon = icon
+    self.symbolName = icon.symbolName
+    self.accessibilityLabel = icon.accessibilityLabel
+    self.accentColor = icon.accentColor
+    self.colorOverride = icon.color
+    self.backgroundOverride = backgroundColor
+    self.weightOverride = iconWeight
     self.style = style
     self.size = size
-    self.backgroundColor = backgroundColor
-    self.iconWeight = iconWeight
+    self.isDisabled = isDisabled
+    self.action = action
+  }
+
+  /// Creates a button from a built-in `IconType`. Kept as a concrete overload so
+  /// leading-dot cases (`.undo`, `.delete`) continue to resolve.
+  public init(
+    _ type: IconType,
+    style: CustomButtonStyle = .circle,
+    size: CGFloat = CustomButtonConfiguration.buttonSize,
+    color: Color? = nil,
+    backgroundColor: Color? = nil,
+    accentColor: Color? = nil,
+    iconWeight: Font.Weight? = nil,
+    isDisabled: Bool = false,
+    action: @escaping () -> Void
+  ) {
+    self.init(
+      symbol: type,
+      style: style,
+      size: size,
+      color: color,
+      backgroundColor: backgroundColor,
+      accentColor: accentColor,
+      iconWeight: iconWeight,
+      isDisabled: isDisabled,
+      action: action
+    )
+  }
+
+  /// Creates a button from any symbol identity.
+  ///
+  /// Leave `color` / `backgroundColor` / `iconWeight` `nil` to inherit the
+  /// `IconButtonTheme`; pass a value to override it for this button only.
+  public init(
+    _ symbol: some IconRepresentable,
+    style: CustomButtonStyle = .circle,
+    size: CGFloat = CustomButtonConfiguration.buttonSize,
+    color: Color? = nil,
+    backgroundColor: Color? = nil,
+    accentColor: Color? = nil,
+    iconWeight: Font.Weight? = nil,
+    isDisabled: Bool = false,
+    action: @escaping () -> Void
+  ) {
+    self.init(
+      symbol: symbol,
+      style: style,
+      size: size,
+      color: color,
+      backgroundColor: backgroundColor,
+      accentColor: accentColor,
+      iconWeight: iconWeight,
+      isDisabled: isDisabled,
+      action: action
+    )
+  }
+
+  /// Shared designated initializer.
+  private init(
+    symbol: some IconRepresentable,
+    style: CustomButtonStyle,
+    size: CGFloat,
+    color: Color?,
+    backgroundColor: Color?,
+    accentColor: Color?,
+    iconWeight: Font.Weight?,
+    isDisabled: Bool,
+    action: @escaping () -> Void
+  ) {
+    self.symbolName = symbol.symbolName
+    self.accessibilityLabel = symbol.accessibilityLabel
+    self.accentColor = accentColor
+    self.colorOverride = color
+    self.backgroundOverride = backgroundColor
+    self.weightOverride = iconWeight
+    self.style = style
+    self.size = size
     self.isDisabled = isDisabled
     self.action = action
   }
@@ -58,58 +138,36 @@ public struct IconButton: View {
   // MARK: Body
 
   public var body: some View {
+    let resolvedColor = colorOverride ?? theme.iconColor
+    let resolvedBackground = backgroundOverride ?? theme.backgroundColor
+    let resolvedWeight = weightOverride ?? theme.iconWeight
+    let icon = Icon(
+      symbolName: symbolName,
+      accessibilityLabel: accessibilityLabel,
+      color: resolvedColor,
+      accentColor: accentColor
+    )
+
     Button(action: action) {
-      IconView(icon, size: size * CustomButtonConfiguration.iconSizeRatio, weight: iconWeight)
-        .opacity(isDisabled ? CustomButtonConfiguration.disabledOpacity : CustomButtonConfiguration.enabledOpacity)
+      IconView(
+        icon,
+        size: size * CustomButtonConfiguration.iconSizeRatio,
+        weight: isPressed
+          ? resolvedWeight.bolder(by: CustomButtonConfiguration.pressedWeightSteps)
+          : resolvedWeight
+      )
         .frame(width: size, height: size)
         .contentShape(Rectangle())
         .background(
           RoundedRectangle(cornerRadius: CustomButtonConfiguration.cornerRadius(for: style))
-            .fill(backgroundColor)
+            .fill(resolvedBackground)
         )
     }
     .disabled(isDisabled)
-    .accessibilityLabel(icon.type.accessibilityLabel)
-    .buttonStyle(CustomButtonPressStyle())
-  }
-}
+    .opacity(isDisabled ? CustomButtonConfiguration.disabledOpacity : CustomButtonConfiguration.enabledOpacity)
+    .accessibilityLabel(accessibilityLabel)
+    .buttonStyle(CustomButtonPressStyle(isPressed: $isPressed))
 
-// MARK: Convenience Init
-
-extension IconButton {
-
-  /// Creates a button from an `IconType`, building the `Icon` from the given colors.
-  ///
-  /// - Parameters:
-  ///   - type: The icon type to display.
-  ///   - style: The background shape. Defaults to circle.
-  ///   - size: The square frame size. Defaults to `CustomButtonConfiguration.buttonSize`.
-  ///   - color: The icon color. Defaults to `.primary`.
-  ///   - backgroundColor: The background fill. Defaults to an adaptive neutral.
-  ///   - accentColor: Optional secondary color for two-tone SF Symbols.
-  ///   - iconWeight: Font weight for the icon. Defaults to `CustomButtonConfiguration.iconWeight`.
-  ///   - isDisabled: Whether the button is non-interactive. Defaults to false.
-  ///   - action: The closure to invoke on tap.
-  public init(
-    _ type: IconType,
-    style: CustomButtonStyle = .circle,
-    size: CGFloat = CustomButtonConfiguration.buttonSize,
-    color: Color = .primary,
-    backgroundColor: Color = Color.primary.opacity(0.08),
-    accentColor: Color? = nil,
-    iconWeight: Font.Weight = CustomButtonConfiguration.iconWeight,
-    isDisabled: Bool = false,
-    action: @escaping () -> Void
-  ) {
-    self.init(
-      Icon(type, color: color, accentColor: accentColor),
-      style: style,
-      size: size,
-      backgroundColor: backgroundColor,
-      iconWeight: iconWeight,
-      isDisabled: isDisabled,
-      action: action
-    )
   }
 }
 
@@ -121,12 +179,12 @@ extension IconButton {
       IconButton(.undo, action: {})
       IconButton(.redo, action: {})
       IconButton(.done, color: .green, action: {})
-      IconButton(.delete, color: .red, action: {})
+      IconButton(.trash, color: .red, action: {})
     }
     HStack(spacing: 12) {
       IconButton(.undo, style: .rectangle, action: {})
-      IconButton(.gridOn, style: .rectangle, action: {})
-      IconButton(.clear, style: .rectangle, isDisabled: true, action: {})
+      IconButton(.redo, style: .rectangle, action: {})
+      IconButton(.trash, style: .rectangle, isDisabled: true, action: {})
     }
   }
   .padding()

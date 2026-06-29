@@ -35,57 +35,89 @@ public struct IconButtonItemBuilder {
 
 /// A single slot in an `IconButtonGroup`.
 ///
-/// Use the convenience initializer to inherit the group's icon color, or pass a
-/// full `Icon` to override the color for this slot only.
+/// Use a symbol initializer to inherit the group's icon color, or pass a full
+/// `Icon` to override the color for this slot only.
 ///
 /// ```swift
-/// IconButtonItem(.undo, action: {})                          // group color
-/// IconButtonItem(Icon(.delete, color: .red), action: {})     // custom color
+/// IconButtonItem(.undo, action: {})                       // group color
+/// IconButtonItem(Icon(.delete, color: .red), action: {})  // custom color
+/// IconButtonItem(EmptyIcon(), action: {})                 // tappable, draws nothing
 /// ```
+///
+/// `EmptyIcon` differs from `.spacer`: a spacer reserves space and is inert,
+/// while an empty symbol is a live, tappable slot that simply renders no symbol.
 public struct IconButtonItem {
 
   // MARK: Properties
 
-  let icon: Icon?
-  let type: IconType?
+  let symbolName: String?
+  let accessibilityLabel: String
   let accentColor: Color?
+  let colorOverride: Color?
   let isDisabled: Bool
   let isEmpty: Bool
   let action: () -> Void
 
   // MARK: Initialization
 
-  /// An empty slot that reserves a button's worth of space but renders nothing.
-  ///
-  /// Keeps the surrounding buttons' widths and alignment unchanged — the spacer
-  /// still counts as a slot, so the group's layout is identical to a full row.
+  /// An inert slot that reserves a button's worth of space but renders nothing.
+  /// Keeps surrounding buttons' widths and alignment unchanged.
   public static var spacer: IconButtonItem { IconButtonItem() }
 
-  /// Creates an empty spacer slot.
+  /// Creates an inert spacer slot.
   public init() {
-    self.icon = nil
-    self.type = nil
+    self.symbolName = nil
+    self.accessibilityLabel = ""
     self.accentColor = nil
+    self.colorOverride = nil
     self.isDisabled = true
     self.isEmpty = true
     self.action = {}
   }
 
-  /// Creates a slot with an explicit `Icon`, using its own color.
+  /// Creates a slot with a pre-coloured `Icon`, using its own color.
   public init(_ icon: Icon, isDisabled: Bool = false, action: @escaping () -> Void) {
-    self.icon = icon
-    self.type = nil
-    self.accentColor = nil
+    self.symbolName = icon.symbolName
+    self.accessibilityLabel = icon.accessibilityLabel
+    self.accentColor = icon.accentColor
+    self.colorOverride = icon.color
     self.isDisabled = isDisabled
     self.isEmpty = false
     self.action = action
   }
 
-  /// Creates a slot using the group's default icon color.
-  public init(_ type: IconType, accentColor: Color? = nil, isDisabled: Bool = false, action: @escaping () -> Void) {
-    self.icon = nil
-    self.type = type
+  /// Creates a slot from a built-in `IconType`, using the group's default color.
+  /// Concrete overload so leading-dot cases (`.minus`, `.add`) keep resolving.
+  public init(
+    _ type: IconType,
+    accentColor: Color? = nil,
+    isDisabled: Bool = false,
+    action: @escaping () -> Void
+  ) {
+    self.init(symbol: type, accentColor: accentColor, isDisabled: isDisabled, action: action)
+  }
+
+  /// Creates a slot from any symbol identity, using the group's default color.
+  public init(
+    _ symbol: some IconRepresentable,
+    accentColor: Color? = nil,
+    isDisabled: Bool = false,
+    action: @escaping () -> Void
+  ) {
+    self.init(symbol: symbol, accentColor: accentColor, isDisabled: isDisabled, action: action)
+  }
+
+  /// Shared designated symbol initializer.
+  private init(
+    symbol: some IconRepresentable,
+    accentColor: Color?,
+    isDisabled: Bool,
+    action: @escaping () -> Void
+  ) {
+    self.symbolName = symbol.symbolName
+    self.accessibilityLabel = symbol.accessibilityLabel
     self.accentColor = accentColor
+    self.colorOverride = nil
     self.isDisabled = isDisabled
     self.isEmpty = false
     self.action = action
@@ -93,14 +125,14 @@ public struct IconButtonItem {
 
   // MARK: Computed Helpers
 
-  /// Resolves the icon for rendering, using the group's default color as fallback.
+  /// Resolves the icon for rendering, falling back to the group's default color
+  /// when the slot carries no color of its own.
   func resolvedIcon(defaultColor: Color) -> Icon {
-    if let icon {
-      return icon
-    }
-    guard let type else {
-      return Icon(.add, color: defaultColor, accentColor: accentColor)
-    }
-    return Icon(type, color: defaultColor, accentColor: accentColor)
+    Icon(
+      symbolName: symbolName,
+      accessibilityLabel: accessibilityLabel,
+      color: colorOverride ?? defaultColor,
+      accentColor: accentColor
+    )
   }
 }

@@ -7,7 +7,10 @@ import SwiftUI
 /// - Individual icon scale and opacity animate on press, matching `IconButton`
 /// - Rectangle width is exact — pass the same `spacing` used in the surrounding
 ///   `HStack` so the group lines up with standalone buttons
-/// - Slots inherit `iconColor` unless they carry their own `Icon`
+/// - Slots inherit the resolved icon color unless they carry their own `Icon`
+///
+/// Colors and weight come from the `IconButtonTheme` in the environment unless
+/// overridden per call.
 ///
 /// ```swift
 /// HStack(spacing: 8) {
@@ -42,10 +45,12 @@ public struct IconButtonGroup: View {
   private let items: [IconButtonItem]
   private let style: Style
   private let size: CGFloat
-  private let backgroundColor: Color
-  private let iconColor: Color
+  private let backgroundOverride: Color?
+  private let iconColorOverride: Color?
+  private let weightOverride: Font.Weight?
 
   @State private var viewModel = IconButtonViewModel()
+  @Environment(\.iconButtonTheme) private var theme
 
   // MARK: Initialization
 
@@ -53,35 +58,43 @@ public struct IconButtonGroup: View {
   public init(
     style: Style = .circle,
     size: CGFloat = CustomButtonConfiguration.buttonSize,
-    backgroundColor: Color = Color.primary.opacity(0.08),
-    iconColor: Color = .primary,
+    backgroundColor: Color? = nil,
+    iconColor: Color? = nil,
+    iconWeight: Font.Weight? = nil,
     @IconButtonItemBuilder items: () -> [IconButtonItem]
   ) {
     self.items = items()
     self.style = style
     self.size = size
-    self.backgroundColor = backgroundColor
-    self.iconColor = iconColor
+    self.backgroundOverride = backgroundColor
+    self.iconColorOverride = iconColor
+    self.weightOverride = iconWeight
   }
 
   /// Creates a button group from an array of items.
   public init(
     style: Style = .circle,
     size: CGFloat = CustomButtonConfiguration.buttonSize,
-    backgroundColor: Color = Color.primary.opacity(0.08),
-    iconColor: Color = .primary,
+    backgroundColor: Color? = nil,
+    iconColor: Color? = nil,
+    iconWeight: Font.Weight? = nil,
     items: [IconButtonItem]
   ) {
     self.items = items
     self.style = style
     self.size = size
-    self.backgroundColor = backgroundColor
-    self.iconColor = iconColor
+    self.backgroundOverride = backgroundColor
+    self.iconColorOverride = iconColor
+    self.weightOverride = iconWeight
   }
 
   // MARK: Body
 
   public var body: some View {
+    let resolvedIconColor = iconColorOverride ?? theme.iconColor
+    let resolvedBackground = backgroundOverride ?? theme.backgroundColor
+    let resolvedWeight = weightOverride ?? theme.iconWeight
+
     HStack(spacing: style.spacing) {
       ForEach(Array(items.indices), id: \.self) { index in
         let item = items[index]
@@ -90,10 +103,17 @@ public struct IconButtonGroup: View {
             .frame(width: size, height: size)
         }
         else {
-          let icon = item.resolvedIcon(defaultColor: iconColor)
+          let icon = item.resolvedIcon(defaultColor: resolvedIconColor)
+          let isAnimating = viewModel.animatingButtonIndex == index
           Button(action: item.action) {
-            IconView(icon, size: size * CustomButtonConfiguration.iconSizeRatio)
-              .scaleEffect(viewModel.animatingButtonIndex == index ? groupedIconScale : CustomButtonConfiguration.normalIconScale)
+            IconView(
+              icon,
+              size: size * CustomButtonConfiguration.iconSizeRatio,
+              weight: isAnimating
+                ? resolvedWeight.bolder(by: CustomButtonConfiguration.pressedWeightSteps)
+                : resolvedWeight
+            )
+              .scaleEffect(isAnimating ? groupedIconScale : CustomButtonConfiguration.normalIconScale)
               .animation(.easeOut(duration: CustomButtonConfiguration.iconScaleAnimationDuration), value: viewModel.animatingButtonIndex)
               .frame(width: size, height: size)
               .contentShape(Rectangle())
@@ -101,7 +121,7 @@ public struct IconButtonGroup: View {
           .opacity(resolvedOpacity(for: index, isDisabled: item.isDisabled))
           .animation(.easeOut(duration: CustomButtonConfiguration.iconAnimationDuration), value: viewModel.isButtonPressed(at: index))
           .disabled(item.isDisabled)
-          .accessibilityLabel(icon.type.accessibilityLabel)
+          .accessibilityLabel(icon.accessibilityLabel)
           .buttonStyle(CustomGroupButtonPressStyle(index: index, viewModel: viewModel))
         }
       }
@@ -111,7 +131,7 @@ public struct IconButtonGroup: View {
     .frame(width: groupWidth)
     .background(
       groupShape
-        .fill(backgroundColor)
+        .fill(resolvedBackground)
         .scaleEffect(
           x: viewModel.animatingButtonIndex != nil ? pressedScaleX : CustomButtonConfiguration.normalScale,
           y: viewModel.animatingButtonIndex != nil ? pressedScaleY : CustomButtonConfiguration.normalScale
@@ -220,7 +240,7 @@ public struct IconButtonGroup: View {
         IconButtonItem(.undo, action: {})
         IconButtonItem(.redo, action: {})
       }
-      IconButton(.delete, style: .rectangle, color: .red, action: {})
+      IconButton(.trash, style: .rectangle, color: .red, action: {})
     }
 
     // Spacer slot — reserves a button's space without rendering one.

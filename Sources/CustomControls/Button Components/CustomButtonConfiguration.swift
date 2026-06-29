@@ -28,6 +28,9 @@ public enum CustomButtonConfiguration {
   /// Symbol rendering mode for SF Symbols.
   public static let symbolRenderingMode: SymbolRenderingMode = .palette
 
+  /// How many weight steps a group icon thickens while its button is pressed.
+  public static let pressedWeightSteps: Int = 2
+
   // MARK: Ratios
 
   /// Ratio of icon font size to button size (~24pt at the default 44pt button).
@@ -60,6 +63,9 @@ public enum CustomButtonConfiguration {
 
   /// Duration of icon opacity animations.
   public static let iconAnimationDuration: Double = 0.1
+
+  /// Duration of the icon cross-fade in `IconToggleButton`.
+  public static let iconCrossfadeDuration: Double = 0.2
 
   /// Scale applied to an icon when its button is pressed.
   public static let pressedIconScale: CGFloat = 1.05
