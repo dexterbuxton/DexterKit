@@ -6,37 +6,49 @@ import SwiftUI
 ///
 /// Theming is *opt-in*: the default value reproduces the historical literals
 /// (`.primary` icon on an adaptive neutral background), so buttons render
-/// correctly with no setup — the slider-style "pick it up and use it" path. Set
-/// a theme once near the root to restyle every button beneath it:
+/// correctly with no setup. Set a theme once near the root to restyle every
+/// button beneath it:
 ///
 /// ```swift
 /// ContentView()
 ///   .iconButtonTheme(
-///     IconButtonTheme(iconColor: appearance.buttonIcon, backgroundColor: appearance.buttonBackground)
+///     IconButtonTheme(
+///       colors: IconButtonColors(
+///         foreground: appearance.buttonIcon,
+///         background: .appSurfaceMedium,
+///         backgroundDisabled: .appSurfaceLight
+///       )
+///     )
 ///   )
 /// ```
 ///
-/// Per-call `color` / `backgroundColor` / `iconWeight` arguments always win over
-/// the theme, so a single destructive symbol can still be tinted in place.
+/// Per-call `color` / `backgroundColor` / `iconWeight` arguments on individual
+/// buttons still win over the theme, so a single destructive symbol can still
+/// be tinted in place.
 public struct IconButtonTheme: Equatable, Sendable {
 
   // MARK: Properties
 
-  public var iconColor: Color
-  public var backgroundColor: Color
-  public var iconWeight: Font.Weight
+  /// The color set. Override this one value to restyle every icon button at once.
+  public var colors: IconButtonColors
+
+  /// The icon weight in its resting (unpressed) state.
+  public var weight: Font.Weight
 
   // MARK: Initialization
 
   public init(
-    iconColor: Color = .primary,
-    backgroundColor: Color = Color.primary.opacity(0.08),
-    iconWeight: Font.Weight = CustomButtonConfiguration.iconWeight
+    colors: IconButtonColors = .default,
+    weight: Font.Weight = CustomButtonConfiguration.iconWeight
   ) {
-    self.iconColor = iconColor
-    self.backgroundColor = backgroundColor
-    self.iconWeight = iconWeight
+    self.colors = colors
+    self.weight = weight
   }
+
+  // MARK: Defaults
+
+  /// The historical `.primary`-on-neutral look.
+  public static let `default` = IconButtonTheme()
 }
 
 // MARK: Environment
@@ -59,7 +71,7 @@ public extension View {
   /// Sets the `IconButtonTheme` for icon buttons in this view hierarchy.
   ///
   /// Per-call color and weight arguments still override the theme.
-  func iconButtonTheme(_ theme: IconButtonTheme) -> some View {
+  func theme(_ theme: IconButtonTheme) -> some View {
     environment(\.iconButtonTheme, theme)
   }
 }

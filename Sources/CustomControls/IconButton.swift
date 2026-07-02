@@ -14,6 +14,22 @@ import SwiftUI
 /// `IconType` cases keep their leading-dot spelling via a dedicated overload;
 /// any other `IconRepresentable` flows through the generic initializer. Use the
 /// `Icon` initializer when you already have a pre-coloured icon value.
+///
+/// ### Disabling
+///
+/// Disabling works exactly like a native SwiftUI `Button`: pass `isDisabled:`
+/// at the call site, chain `.disabled(_:)` on the view, or both — they combine
+/// (SwiftUI ANDs nested `isEnabled` environment writes), so an external
+/// `.disabled()` always wins even if the call site didn't set `isDisabled:`.
+///
+/// Either path dims (or, with `IconButtonColors.foregroundDisabled` /
+/// `backgroundDisabled` set, solid-swaps) both colors, blocks taps, and gets
+/// the standard disabled accessibility treatment for free.
+///
+/// ```swift
+/// IconButton(.undo, isDisabled: !canUndo, action: undo)  // call-site
+/// IconButton(.undo, action: undo).disabled(!canUndo)     // modifier
+/// ```
 public struct IconButton: View {
 
   // MARK: Properties
@@ -31,6 +47,7 @@ public struct IconButton: View {
   @State private var isPressed = false
 
   @Environment(\.iconButtonTheme) private var theme
+  @Environment(\.isEnabled) private var isEnabled
 
   // MARK: Initialization
 
@@ -135,12 +152,20 @@ public struct IconButton: View {
     self.action = action
   }
 
+  // MARK: Computed Helpers
+
+  /// Combines the call-site `isDisabled:` with any ambient `.disabled()`
+  /// applied by the caller, so either path (or both) disables the button.
+  private var resolvedDisabled: Bool {
+    isDisabled || !isEnabled
+  }
+
   // MARK: Body
 
   public var body: some View {
-    let resolvedColor = colorOverride ?? theme.iconColor
-    let resolvedBackground = backgroundOverride ?? theme.backgroundColor
-    let resolvedWeight = weightOverride ?? theme.iconWeight
+    let resolvedColor = theme.colors.resolvedForeground(override: colorOverride, disabled: resolvedDisabled)
+    let resolvedBackground = theme.colors.resolvedBackground(override: backgroundOverride, disabled: resolvedDisabled)
+    let resolvedWeight = weightOverride ?? theme.weight
     let icon = Icon(
       symbolName: symbolName,
       accessibilityLabel: accessibilityLabel,
@@ -163,11 +188,9 @@ public struct IconButton: View {
             .fill(resolvedBackground)
         )
     }
-    .disabled(isDisabled)
-    .opacity(isDisabled ? CustomButtonConfiguration.disabledOpacity : CustomButtonConfiguration.enabledOpacity)
+    .disabled(resolvedDisabled)
     .accessibilityLabel(accessibilityLabel)
     .buttonStyle(CustomButtonPressStyle(isPressed: $isPressed))
-
   }
 }
 
@@ -184,7 +207,99 @@ public struct IconButton: View {
     HStack(spacing: 12) {
       IconButton(.undo, style: .rectangle, action: {})
       IconButton(.redo, style: .rectangle, action: {})
-      IconButton(.trash, style: .rectangle, isDisabled: true, action: {})
+      IconButton(.done, style: .rectangle, color: .green, action: {})
+      IconButton(.trash, style: .rectangle, color: .red, action: {})
+    }
+  }
+  .padding()
+}
+
+#Preview("Icon Button Disabled") {
+
+  // A fully custom theme - with & without disabled colors
+
+  // Gray Colors - similar to default.
+  let defaultColors = IconButtonColors(
+    foreground: Color.init(white: 0.2),
+    background: Color.init(white: 0.9)
+  )
+  let defaultTheme = IconButtonTheme(colors: defaultColors)
+
+  // Gray Colors with disabled colors added at exact opacity as default
+  let defaultDisabledColors = IconButtonColors(
+    foreground: Color.init(white: 0.2),
+    background: Color.init(white: 0.9),
+    foregroundDisabled: Color.init(white: 0.2).opacity(0.4),
+    backgroundDisabled: Color.init(white: 0.9).opacity(0.4)
+  )
+  let defaultDisabledTheme = IconButtonTheme(colors: defaultDisabledColors)
+
+  // Red & Black - demonstrating custom colors.
+  let customColors = IconButtonColors(
+    foreground: .red,
+    background: .black
+  )
+  let custom = IconButtonTheme(colors: customColors)
+
+  let customDisabledColors = IconButtonColors(
+    foreground: .red,
+    background: .black,
+    foregroundDisabled: .black,
+    backgroundDisabled: .red
+  )
+  let customDisabled = IconButtonTheme(colors: customDisabledColors)
+
+  return VStack(alignment: .leading, spacing: 24) {
+    HStack(spacing: 12) {
+      // 1: Default Theme - not disabled.
+      IconButton(
+        .cancel,
+        style: .rectangle,
+        action: {
+        })
+      .theme(defaultTheme)
+      // 2: Default - disabled via opacity.
+      IconButton(
+        .cancel,
+        style: .rectangle,
+        action: {
+        })
+      .theme(defaultTheme)
+      .disabled(true)
+      // 3: Default + Disabled Colors (Looks the same as #2)
+      IconButton(
+        .cancel,
+        style: .rectangle,
+        action: {}
+      )
+      .theme(defaultDisabledTheme)
+      .disabled(true)
+    }
+
+    HStack(spacing: 12) {
+      // 1: Custom colors, not disabled.
+      IconButton(
+        .cancel,
+        style: .rectangle,
+        action: {
+        })
+        .theme(custom)
+      // 2: Custom Colors - Disabled using dimming.
+      IconButton(
+        .cancel,
+        style: .rectangle,
+        action: {
+        })
+        .theme(custom)
+        .disabled(true)
+      // 3: Custom Colors and Custom Disable Colors.
+      IconButton(
+        .cancel,
+        style: .rectangle,
+        action: {
+        })
+        .theme(customDisabled)
+        .disabled(true)
     }
   }
   .padding()

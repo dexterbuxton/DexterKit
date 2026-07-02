@@ -14,6 +14,13 @@ import SwiftUI
 /// ```
 ///
 /// Colors and weight come from the `IconButtonTheme` unless overridden per call.
+///
+/// ### Disabling
+///
+/// Same model as `IconButton`: pass `isDisabled:` at the call site, chain
+/// `.disabled(_:)`, or both — they compose. Both colors dim via opacity by
+/// default, or solid-swap if `IconButtonColors.foregroundDisabled` /
+/// `backgroundDisabled` are set.
 public struct IconToggleButton: View {
 
   // MARK: Properties
@@ -34,6 +41,7 @@ public struct IconToggleButton: View {
 
   @Binding private var isOn: Bool
   @Environment(\.iconButtonTheme) private var theme
+  @Environment(\.isEnabled) private var isEnabled
 
   // MARK: Initialization
 
@@ -129,12 +137,20 @@ public struct IconToggleButton: View {
     self.onToggle = onToggle
   }
 
+  // MARK: Computed Helpers
+
+  /// Combines the call-site `isDisabled:` with any ambient `.disabled()`
+  /// applied by the caller, so either path (or both) disables the button.
+  private var resolvedDisabled: Bool {
+    isDisabled || !isEnabled
+  }
+
   // MARK: Body
 
   public var body: some View {
-    let resolvedColor = colorOverride ?? theme.iconColor
-    let resolvedBackground = backgroundOverride ?? theme.backgroundColor
-    let resolvedWeight = weightOverride ?? theme.iconWeight
+    let resolvedColor = theme.colors.resolvedForeground(override: colorOverride, disabled: resolvedDisabled)
+    let resolvedBackground = theme.colors.resolvedBackground(override: backgroundOverride, disabled: resolvedDisabled)
+    let resolvedWeight = weightOverride ?? theme.weight
     let iconSize = min(width, height) * CustomButtonConfiguration.iconSizeRatio
     let onIcon = Icon(symbolName: onSymbol, accessibilityLabel: onLabel, color: resolvedColor, accentColor: accentColor)
     let offIcon = Icon(symbolName: offSymbol, accessibilityLabel: offLabel, color: resolvedColor, accentColor: accentColor)
@@ -157,8 +173,7 @@ public struct IconToggleButton: View {
           .fill(resolvedBackground)
       )
     }
-    .disabled(isDisabled)
-    .opacity(isDisabled ? CustomButtonConfiguration.disabledOpacity : CustomButtonConfiguration.enabledOpacity)
+    .disabled(resolvedDisabled)
     .accessibilityLabel(accessibilityText)
     .accessibilityAddTraits(isOn ? .isSelected : [])
     .buttonStyle(CustomButtonPressStyle())
@@ -230,6 +245,81 @@ public extension IconToggleButton {
           off: .copy,
           style: .rectangle
         )
+      }
+      .padding()
+    }
+  }
+
+  return TogglePreview()
+}
+
+#Preview("Icon Toggle Button Disabled") {
+  struct TogglePreview: View {
+    @State private var toggle1 = false
+    @State private var toggle2 = false
+    @State private var toggle3 = false
+    @State private var toggle4 = false
+    @State private var toggle5 = false
+    @State private var toggle6 = false
+
+    var body: some View {
+      // Same color definitions as the "Icon Button Disabled" preview.
+      let defaultColors = IconButtonColors(
+        foreground: Color(white: 0.2),
+        background: Color(white: 0.9)
+      )
+      let defaultTheme = IconButtonTheme(colors: defaultColors)
+
+      let defaultDisabledColors = IconButtonColors(
+        foreground: Color(white: 0.2),
+        background: Color(white: 0.9),
+        foregroundDisabled: Color(white: 0.2).opacity(0.4),
+        backgroundDisabled: Color(white: 0.9).opacity(0.4)
+      )
+      let defaultDisabledTheme = IconButtonTheme(colors: defaultDisabledColors)
+
+      let customColors = IconButtonColors(
+        foreground: .red,
+        background: .black
+      )
+      let custom = IconButtonTheme(colors: customColors)
+
+      let customDisabledColors = IconButtonColors(
+        foreground: .red,
+        background: .black,
+        foregroundDisabled: .black,
+        backgroundDisabled: .red
+      )
+      let customDisabled = IconButtonTheme(colors: customDisabledColors)
+
+      return VStack(alignment: .leading, spacing: 24) {
+        HStack(spacing: 12) {
+          // 1: Default Theme - not disabled.
+          IconToggleButton(isOn: $toggle1, on: .toggleOn, off: .toggleOff, style: .rectangle)
+            .theme(defaultTheme)
+          // 2: Default - disabled via opacity.
+          IconToggleButton(isOn: $toggle2, on: .toggleOn, off: .toggleOff, style: .rectangle)
+            .theme(defaultTheme)
+            .disabled(true)
+          // 3: Default + Disabled Colors (Looks the same as #2)
+          IconToggleButton(isOn: $toggle3, on: .toggleOn, off: .toggleOff, style: .rectangle)
+            .theme(defaultDisabledTheme)
+            .disabled(true)
+        }
+
+        HStack(spacing: 12) {
+          // 1: Custom colors, not disabled.
+          IconToggleButton(isOn: $toggle4, on: .toggleOn, off: .toggleOff, style: .rectangle)
+            .theme(custom)
+          // 2: Custom Colors - Disabled using dimming.
+          IconToggleButton(isOn: $toggle5, on: .toggleOn, off: .toggleOff, style: .rectangle)
+            .theme(custom)
+            .disabled(true)
+          // 3: Custom Colors and Custom Disable Colors.
+          IconToggleButton(isOn: $toggle6, on: .toggleOn, off: .toggleOff, style: .rectangle)
+            .theme(customDisabled)
+            .disabled(true)
+        }
       }
       .padding()
     }

@@ -18,8 +18,34 @@ import SwiftUI
 ///     IconButtonItem(.undo, action: undo)
 ///     IconButtonItem(.redo, action: redo)
 ///   }
-///   IconButton(.delete, style: .rectangle, action: delete)
+///   IconButton(.delete, style: .rectangle, color: .red, action: delete)
 /// }
+/// ```
+///
+/// ### Disabling
+///
+/// Individual items disable via `IconButtonItem(_:isDisabled:action:)` at the
+/// call site — each item's icon dims (or solid-swaps, if
+/// `IconButtonColors.foregroundDisabled` is set) independently. Disabling the
+/// *group* — `.disabled(true)` chained on the whole `IconButtonGroup` —
+/// supersedes every item's own state: while the group is disabled, every item
+/// is disabled regardless of what it passed individually. This falls out of
+/// how SwiftUI composes `isEnabled` through the environment, so no extra API
+/// is needed:
+///
+/// The group's *shared background* dims/swaps in two cases: the group itself
+/// was disabled via `.disabled()`, or every item happened to disable itself
+/// individually (spacer slots don't count). A group with only *some* items
+/// disabled keeps its enabled background — there's one shared shape behind
+/// the whole row, so it can't show two background colors at once; only the
+/// individual icons reflect a mixed state.
+///
+/// ```swift
+/// IconButtonGroup {
+///   IconButtonItem(.undo, isDisabled: !canUndo, action: undo)
+///   IconButtonItem(.redo, action: redo)
+/// }
+/// .disabled(isLocked)   // true here disables both, whatever canUndo/redo say
 /// ```
 public struct IconButtonGroup: View {
 
@@ -51,6 +77,7 @@ public struct IconButtonGroup: View {
 
   @State private var viewModel = IconButtonViewModel()
   @Environment(\.iconButtonTheme) private var theme
+  @Environment(\.isEnabled) private var isEnabled
 
   // MARK: Initialization
 
@@ -88,12 +115,39 @@ public struct IconButtonGroup: View {
     self.weightOverride = iconWeight
   }
 
+  // MARK: Computed Helpers
+
+  /// Whether the group itself has been disabled via `.disabled()`. This
+  /// supersedes every item's own `isDisabled`, since a disabled ambient
+  /// environment forces every item's effective disabled state to `true` below.
+  private var groupDisabled: Bool {
+    !isEnabled
+  }
+
+  /// An item's effective disabled state — its own flag OR the group's.
+  private func resolvedDisabled(for item: IconButtonItem) -> Bool {
+    groupDisabled || item.isDisabled
+  }
+
+  /// Whether the group's shared background should render in its disabled
+  /// state. True when the group itself was disabled via `.disabled()`, or
+  /// when every *interactive* item disabled itself individually — spacer
+  /// slots (`IconButtonItem.isEmpty`) don't count, since they're not buttons.
+  ///
+  /// This only affects the shared background; per-item icon dimming already
+  /// follows each item's own `resolvedDisabled(for:)` regardless.
+  private var containerDisabled: Bool {
+    guard !groupDisabled else { return true }
+    let interactiveItems = items.filter { !$0.isEmpty }
+    guard !interactiveItems.isEmpty else { return false }
+    return interactiveItems.allSatisfy(\.isDisabled)
+  }
+
   // MARK: Body
 
   public var body: some View {
-    let resolvedIconColor = iconColorOverride ?? theme.iconColor
-    let resolvedBackground = backgroundOverride ?? theme.backgroundColor
-    let resolvedWeight = weightOverride ?? theme.iconWeight
+    let resolvedBackground = theme.colors.resolvedBackground(override: backgroundOverride, disabled: containerDisabled)
+    let resolvedWeight = weightOverride ?? theme.weight
 
     HStack(spacing: style.spacing) {
       ForEach(Array(items.indices), id: \.self) { index in
@@ -103,6 +157,8 @@ public struct IconButtonGroup: View {
             .frame(width: size, height: size)
         }
         else {
+          let itemDisabled = resolvedDisabled(for: item)
+          let resolvedIconColor = theme.colors.resolvedForeground(override: iconColorOverride, disabled: itemDisabled)
           let icon = item.resolvedIcon(defaultColor: resolvedIconColor)
           let isAnimating = viewModel.animatingButtonIndex == index
           Button(action: item.action) {
@@ -118,9 +174,9 @@ public struct IconButtonGroup: View {
               .frame(width: size, height: size)
               .contentShape(Rectangle())
           }
-          .opacity(resolvedOpacity(for: index, isDisabled: item.isDisabled))
+          .opacity(resolvedPressOpacity(for: index))
           .animation(.easeOut(duration: CustomButtonConfiguration.iconAnimationDuration), value: viewModel.isButtonPressed(at: index))
-          .disabled(item.isDisabled)
+          .disabled(itemDisabled)
           .accessibilityLabel(icon.accessibilityLabel)
           .buttonStyle(CustomGroupButtonPressStyle(index: index, viewModel: viewModel))
         }
@@ -194,11 +250,11 @@ public struct IconButtonGroup: View {
     CustomButtonConfiguration.pressedBackgroundScale
   }
 
-  private func resolvedOpacity(for index: Int, isDisabled: Bool) -> Double {
-    if isDisabled {
-      return CustomButtonConfiguration.disabledOpacity
-    }
-    return viewModel.isButtonPressed(at: index)
+  /// Press-feedback opacity only. Disabled dimming now lives in the icon's
+  /// resolved color (see `resolvedIconColor` in `body`), so this no longer
+  /// takes a disabled flag.
+  private func resolvedPressOpacity(for index: Int) -> Double {
+    viewModel.isButtonPressed(at: index)
       ? CustomButtonConfiguration.pressedIconOpacity
       : CustomButtonConfiguration.enabledOpacity
   }
@@ -247,7 +303,104 @@ public struct IconButtonGroup: View {
     IconButtonGroup(style: .rectangle(spacing: 8)) {
       IconButtonItem(.back, action: {})
       IconButtonItem.spacer
+      IconButtonItem.spacer
       IconButtonItem(.forward, action: {})
+    }
+  }
+  .padding()
+}
+
+
+#Preview("Icon Button Group Disabled") {
+  // Same color definitions as the "Icon Button Disabled" preview in
+  // IconButton.swift, reused here for a direct visual comparison.
+
+  // Gray colors with disabled colors set at the exact default opacity —
+  // looks identical to plain opacity-dimming, just made explicit.
+  let defaultDisabledColors = IconButtonColors(
+    foreground: Color(white: 0.2),
+    background: Color(white: 0.9),
+    foregroundDisabled: Color(white: 0.2).opacity(0.4),
+    backgroundDisabled: Color(white: 0.9).opacity(0.4)
+  )
+  let defaultDisabledTheme = IconButtonTheme(colors: defaultDisabledColors)
+
+  // Colors with a solid-swap disabled pair that doesn't match a fade.
+  let customDisabledColors = IconButtonColors(
+    foreground: .blue,
+    background: .yellow,
+    foregroundDisabled: .red,
+    backgroundDisabled: .green
+  )
+  let customDisabled = IconButtonTheme(colors: customDisabledColors)
+
+  return VStack(alignment: .leading, spacing: 50) {
+    // Default-style (opacity-matched) disabled colors.
+    VStack(spacing: 8) {
+      // 1: One item disabled.
+      IconButtonGroup(style: .rectangle(spacing: 8)) {
+        IconButtonItem(.back, isDisabled: true, action: {})
+        IconButtonItem(.cancel, action: {})
+        IconButtonItem(.forward, action: {})
+      }
+      .theme(defaultDisabledTheme)
+
+      // 2: Two items disabled.
+      IconButtonGroup(style: .rectangle(spacing: 8)) {
+        IconButtonItem(.back, isDisabled: true, action: {})
+        IconButtonItem(.cancel, isDisabled: true, action: {})
+        IconButtonItem(.forward, action: {})
+      }
+      .theme(defaultDisabledTheme)
+
+      // 3: All three disabled
+      IconButtonGroup(style: .rectangle(spacing: 8)) {
+        IconButtonItem(.back, isDisabled: true, action: {})
+        IconButtonItem(.cancel, isDisabled: true, action: {})
+        IconButtonItem(.forward, isDisabled: true, action: {})
+      }
+      .theme(defaultDisabledTheme)
+
+      // 4: Group Disabled
+      IconButtonGroup(style: .rectangle(spacing: 8)) {
+        IconButtonItem(.back, action: {})
+        IconButtonItem(.cancel, action: {})
+        IconButtonItem(.forward, action: {})
+      }
+      .theme(defaultDisabledTheme)
+      .disabled(true)
+    }
+
+    // Custom solid-swap disabled colors — same progression.
+    VStack(spacing: 8) {
+      IconButtonGroup(style: .rectangle(spacing: 8)) {
+        IconButtonItem(.back, isDisabled: true, action: {})
+        IconButtonItem(.cancel, action: {})
+        IconButtonItem(.forward, action: {})
+      }
+      .theme(customDisabled)
+
+      IconButtonGroup(style: .rectangle(spacing: 8)) {
+        IconButtonItem(.back, isDisabled: true, action: {})
+        IconButtonItem(.cancel, isDisabled: true, action: {})
+        IconButtonItem(.forward, action: {})
+      }
+      .theme(customDisabled)
+
+      IconButtonGroup(style: .rectangle(spacing: 8)) {
+        IconButtonItem(.back, isDisabled: true, action: {})
+        IconButtonItem(.cancel, isDisabled: true, action: {})
+        IconButtonItem(.forward, isDisabled: true, action: {})
+      }
+      .theme(customDisabled)
+
+      IconButtonGroup(style: .rectangle(spacing: 8)) {
+        IconButtonItem(.back, action: {})
+        IconButtonItem(.cancel, action: {})
+        IconButtonItem(.forward, action: {})
+      }
+      .theme(customDisabled)
+      .disabled(true)
     }
   }
   .padding()
