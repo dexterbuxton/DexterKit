@@ -282,14 +282,12 @@ public struct IconButtonGroup: View {
       IconButtonItem(.undo, action: {})
       IconButtonItem(.redo, action: {})
     }
-
     IconButtonGroup {
       IconButtonItem(.back, action: {})
       IconButtonItem(.forward, action: {})
       IconButtonItem(.cancel, action: {})
       IconButtonItem(.done, action: {})
     }
-
     // Rectangle group aligned with a standalone button at the same spacing.
     HStack(spacing: 8) {
       IconButtonGroup(style: .rectangle(spacing: 8)) {
@@ -298,7 +296,6 @@ public struct IconButtonGroup: View {
       }
       IconButton(.trash, style: .rectangle, color: .red, action: {})
     }
-
     // Spacer slot — reserves a button's space without rendering one.
     IconButtonGroup(style: .rectangle(spacing: 8)) {
       IconButtonItem(.back, action: {})
@@ -309,7 +306,6 @@ public struct IconButtonGroup: View {
   }
   .padding()
 }
-
 
 #Preview("Icon Button Group Disabled") {
   // Same color definitions as the "Icon Button Disabled" preview in
@@ -344,7 +340,6 @@ public struct IconButtonGroup: View {
         IconButtonItem(.forward, action: {})
       }
       .theme(defaultDisabledTheme)
-
       // 2: Two items disabled.
       IconButtonGroup(style: .rectangle(spacing: 8)) {
         IconButtonItem(.back, isDisabled: true, action: {})
@@ -352,7 +347,6 @@ public struct IconButtonGroup: View {
         IconButtonItem(.forward, action: {})
       }
       .theme(defaultDisabledTheme)
-
       // 3: All three disabled
       IconButtonGroup(style: .rectangle(spacing: 8)) {
         IconButtonItem(.back, isDisabled: true, action: {})
@@ -360,7 +354,6 @@ public struct IconButtonGroup: View {
         IconButtonItem(.forward, isDisabled: true, action: {})
       }
       .theme(defaultDisabledTheme)
-
       // 4: Group Disabled
       IconButtonGroup(style: .rectangle(spacing: 8)) {
         IconButtonItem(.back, action: {})
@@ -379,21 +372,18 @@ public struct IconButtonGroup: View {
         IconButtonItem(.forward, action: {})
       }
       .theme(customDisabled)
-
       IconButtonGroup(style: .rectangle(spacing: 8)) {
         IconButtonItem(.back, isDisabled: true, action: {})
         IconButtonItem(.cancel, isDisabled: true, action: {})
         IconButtonItem(.forward, action: {})
       }
       .theme(customDisabled)
-
       IconButtonGroup(style: .rectangle(spacing: 8)) {
         IconButtonItem(.back, isDisabled: true, action: {})
         IconButtonItem(.cancel, isDisabled: true, action: {})
         IconButtonItem(.forward, isDisabled: true, action: {})
       }
       .theme(customDisabled)
-
       IconButtonGroup(style: .rectangle(spacing: 8)) {
         IconButtonItem(.back, action: {})
         IconButtonItem(.cancel, action: {})

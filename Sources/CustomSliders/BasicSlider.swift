@@ -53,7 +53,7 @@ public struct BasicSlider: View {
   ///   - step: The step value for the slider. Defaults to `0.1`.
   ///   - thumbSize: The size of the slider's thumb. Defaults to `30`.
   ///   - trackHeight: The thickness of the slider's track. Defaults to `10`.
-  init(
+  public init(
     value: Binding<Double>,
     in range: ClosedRange<Double> = 0...1,
     step: Double = 0.1,
