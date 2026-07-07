@@ -161,6 +161,9 @@ public struct GradientSlider: View {
           .simultaneousGesture(moveGesture(given: reader.size.width))
       }
       .animation(isMoving ? .none : .easeInOut(duration: 0.3), value: config.value)
+      .onChange(of: value) { _, newValue in
+        config.value = newValue
+      }
     }
     .frame(height: config.thumbSize)
   }
