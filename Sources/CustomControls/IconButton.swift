@@ -91,6 +91,23 @@ public struct IconButton: View {
     self.action = action
   }
 
+  /// Creates a button from any symbol identity — the extension seam for
+  /// app-defined icon catalogs that conform to `IconRepresentable`.
+  public init(
+    _ symbol: some IconRepresentable,
+    style: CustomButtonStyle = .circle,
+    isDisabled: Bool = false,
+    action: @escaping () -> Void
+  ) {
+    self.symbolName = symbol.symbolName
+    self.accessibilityLabel = symbol.accessibilityLabel
+    self.accentColor = nil
+    self.colorOverride = nil
+    self.style = style
+    self.isDisabled = isDisabled
+    self.action = action
+  }
+
   // MARK: Body
 
   public var body: some View {
