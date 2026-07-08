@@ -12,7 +12,8 @@ import SwiftUI
 /// ```swift
 /// Icon(IconType.undo, color: .primary)
 /// Icon(IconType.delete, color: .red)
-/// Icon(EmptyIcon(), color: .primary)        // renders nothing
+/// Icon(IconType.trash, color: .red)
+/// Icon(EmptyIcon(), color: .primary)      // renders nothing
 /// ```
 public struct Icon: Hashable, Sendable {
 

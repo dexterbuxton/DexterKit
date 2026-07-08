@@ -4,6 +4,6 @@ import SwiftUI
 public enum CustomButtonStyle: Equatable, Sendable {
   /// A circular background (rendered as a capsule on non-square frames).
   case circle
-  /// A rounded-rectangle background.
-  case rectangle
+  /// A rounded-square background.
+  case square
 }

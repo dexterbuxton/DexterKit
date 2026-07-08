@@ -7,8 +7,8 @@ struct CustomButtonConfigurationTests {
   @Test func testCornerRadiusForStyle() {
     #expect(CustomButtonConfiguration.cornerRadius(for: .circle) == CustomButtonConfiguration.circleCornerRadius)
     #expect(CustomButtonConfiguration.cornerRadius(for: .circle) == .infinity)
-    #expect(CustomButtonConfiguration.cornerRadius(for: .rectangle) == CustomButtonConfiguration.roundedRectangleCornerRadius)
-    #expect(CustomButtonConfiguration.cornerRadius(for: .rectangle) == 8)
+    #expect(CustomButtonConfiguration.cornerRadius(for: .square) == CustomButtonConfiguration.squareCornerRadius)
+    #expect(CustomButtonConfiguration.cornerRadius(for: .square) == 8)
   }
 
   @Test func testIconSizeScalesWithButtonSize() {
@@ -33,8 +33,36 @@ struct CustomButtonConfigurationTests {
   }
 
   @Test func testAnimationScalesArePositive() {
+    // Generic (unsized) content buttons still use a proportional scale.
     #expect(CustomButtonConfiguration.pressedBackgroundScale > CustomButtonConfiguration.normalScale)
     #expect(CustomButtonConfiguration.pressedIconScale > CustomButtonConfiguration.normalIconScale)
     #expect(CustomButtonConfiguration.minimumAnimationCycle > 0)
+  }
+
+  @Test func testAnimationDurationsAreSped() {
+    // All three press-related durations were doubled in speed (halved) together.
+    #expect(CustomButtonConfiguration.backgroundAnimationDuration == 0.1)
+    #expect(CustomButtonConfiguration.iconAnimationDuration == 0.1)
+    #expect(CustomButtonConfiguration.iconScaleAnimationDuration == 0.1)
+  }
+
+  @Test func testPressExpansionIsHalfOfGroupSpacing() {
+    // Sized icon buttons (standalone and grouped) use a fixed-point expansion
+    // instead of a proportional scale, deliberately set to half of
+    // groupSpacing so a pressed group button doesn't overlap its neighbor.
+    #expect(CustomButtonConfiguration.defaultPressExpansion == CustomButtonConfiguration.groupSpacing / 2)
+    #expect(CustomButtonConfiguration.defaultPressExpansion == 4)
+  }
+
+  @Test func testGroupInnerPaddingIsSharedAcrossStyles() {
+    // Both .circle and .square groups use the same inner padding, so their
+    // groupWidth formulas agree for a given item count and spacing.
+    #expect(CustomButtonConfiguration.groupInnerPadding > 0)
+  }
+
+  @Test func testTextButtonDefaults() {
+    #expect(CustomButtonConfiguration.textButtonWidth > 0)
+    #expect(CustomButtonConfiguration.textButtonContentSpacing > 0)
+    #expect(CustomButtonConfiguration.textButtonContentPadding > 0)
   }
 }

@@ -24,7 +24,7 @@ struct IconTypeTests {
   @Test func testKnownMappings() {
     #expect(IconType.undo.systemImage == "arrow.uturn.backward")
     #expect(IconType.undo.accessibilityLabel == "Undo")
-    #expect(IconType.gridBorderOn.systemImage == "squareshape.fill")
+    #expect(IconType.trash.systemImage == "trash")
     #expect(IconType.done.accessibilityLabel == "Done")
   }
 }

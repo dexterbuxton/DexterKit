@@ -103,7 +103,8 @@ public enum IconType: Hashable, Sendable, CaseIterable {
   /// `IconType.allCases`.
   public static let previewGroups: [(label: String, icons: [IconType])] = [
     ("Navigation", [.back, .forward, .cancel, .done]),
-    ("Actions", [.plus, .minus, .copy, .copyReady, .undo, .redo, .trash]),
+    ("Actions", [.plus, .minus, .copy, .copyReady]),
+    ("Undo/Redo", [.undo, .redo, .trash]),
     ("Toggle", [.toggleOn, .toggleOff]),
     ("Direction", [.up, .down, .left, .right])
   ]

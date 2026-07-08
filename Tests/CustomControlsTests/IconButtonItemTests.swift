@@ -7,21 +7,21 @@ struct IconButtonItemTests {
   @Test func testTypeSlotInheritsDefaultColor() {
     let item = IconButtonItem(.undo, action: {})
     let icon = item.resolvedIcon(defaultColor: .red)
-    #expect(icon.type == .undo)
+    #expect(icon.symbolName == IconType.undo.symbolName)
     #expect(icon.color == .red)
     #expect(icon.accentColor == nil)
   }
 
   @Test func testTypeSlotPassesAccentColor() {
-    let item = IconButtonItem(.gridOn, accentColor: .blue, action: {})
+    let item = IconButtonItem(.toggleOn, accentColor: .blue, action: {})
     let icon = item.resolvedIcon(defaultColor: .red)
     #expect(icon.accentColor == .blue)
   }
 
   @Test func testIconSlotKeepsItsOwnColor() {
-    let item = IconButtonItem(Icon(.delete, color: .green), action: {})
+    let item = IconButtonItem(Icon(IconType.trash, color: .green), action: {})
     let icon = item.resolvedIcon(defaultColor: .red)
-    #expect(icon.type == .delete)
+    #expect(icon.symbolName == IconType.trash.symbolName)
     #expect(icon.color == .green)
   }
 
@@ -36,7 +36,7 @@ struct IconButtonItemTests {
       IconButtonItem(.undo, action: {})
       IconButtonItem(.redo, action: {})
       if includeExtra {
-        IconButtonItem(.delete, action: {})
+        IconButtonItem(.trash, action: {})
       }
     }
     #expect(make(includeExtra: false).count == 2)

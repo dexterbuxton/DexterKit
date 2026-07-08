@@ -243,7 +243,7 @@ public extension IconToggleButton {
           isOn: $toggle2,
           on: .copyReady,
           off: .copy,
-          style: .rectangle
+          style: .square
         )
       }
       .padding()
@@ -295,28 +295,28 @@ public extension IconToggleButton {
       return VStack(alignment: .leading, spacing: 24) {
         HStack(spacing: 12) {
           // 1: Default Theme - not disabled.
-          IconToggleButton(isOn: $toggle1, on: .toggleOn, off: .toggleOff, style: .rectangle)
+          IconToggleButton(isOn: $toggle1, on: .toggleOn, off: .toggleOff, style: .square)
             .theme(defaultTheme)
           // 2: Default - disabled via opacity.
-          IconToggleButton(isOn: $toggle2, on: .toggleOn, off: .toggleOff, style: .rectangle)
+          IconToggleButton(isOn: $toggle2, on: .toggleOn, off: .toggleOff, style: .square)
             .theme(defaultTheme)
             .disabled(true)
           // 3: Default + Disabled Colors (Looks the same as #2)
-          IconToggleButton(isOn: $toggle3, on: .toggleOn, off: .toggleOff, style: .rectangle)
+          IconToggleButton(isOn: $toggle3, on: .toggleOn, off: .toggleOff, style: .square)
             .theme(defaultDisabledTheme)
             .disabled(true)
         }
 
         HStack(spacing: 12) {
           // 1: Custom colors, not disabled.
-          IconToggleButton(isOn: $toggle4, on: .toggleOn, off: .toggleOff, style: .rectangle)
+          IconToggleButton(isOn: $toggle4, on: .toggleOn, off: .toggleOff, style: .square)
             .theme(custom)
           // 2: Custom Colors - Disabled using dimming.
-          IconToggleButton(isOn: $toggle5, on: .toggleOn, off: .toggleOff, style: .rectangle)
+          IconToggleButton(isOn: $toggle5, on: .toggleOn, off: .toggleOff, style: .square)
             .theme(custom)
             .disabled(true)
           // 3: Custom Colors and Custom Disable Colors.
-          IconToggleButton(isOn: $toggle6, on: .toggleOn, off: .toggleOff, style: .rectangle)
+          IconToggleButton(isOn: $toggle6, on: .toggleOn, off: .toggleOff, style: .square)
             .theme(customDisabled)
             .disabled(true)
         }
