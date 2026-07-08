@@ -65,7 +65,7 @@ public struct IconButtonGroup: View {
   @State private var viewModel = IconButtonViewModel()
   @Environment(\.iconButtonTheme) private var theme
   @Environment(\.isEnabled) private var isEnabled
-  @Environment(\.buttonSize) private var size
+  @Environment(\.buttonSize) private var buttonSize
   @Environment(\.buttonPressExpansion) private var pressExpansion
   @Environment(\.iconColorOverride) private var iconColorOverride
   @Environment(\.iconBackgroundOverride) private var iconBackgroundOverride
@@ -120,7 +120,7 @@ public struct IconButtonGroup: View {
         let item = items[index]
         if item.isEmpty {
           Color.clear
-            .frame(width: size, height: size)
+            .frame(width: buttonSize.width, height: buttonSize.height)
         }
         else {
           let itemDisabled = resolvedDisabled(for: item)
@@ -130,14 +130,14 @@ public struct IconButtonGroup: View {
           Button(action: item.action) {
             IconView(
               icon,
-              size: size * CustomButtonConfiguration.iconSizeRatio,
+              size: min(buttonSize.width, buttonSize.height) * CustomButtonConfiguration.iconSizeRatio,
               weight: isAnimating
                 ? resolvedWeight.bolder(by: CustomButtonConfiguration.pressedWeightSteps)
                 : resolvedWeight
             )
               .scaleEffect(isAnimating ? groupedIconScale : CustomButtonConfiguration.normalIconScale)
               .animation(.easeOut(duration: CustomButtonConfiguration.iconScaleAnimationDuration), value: viewModel.animatingButtonIndex)
-              .frame(width: size, height: size)
+              .frame(width: buttonSize.width, height: buttonSize.height)
               .contentShape(Rectangle())
           }
           .opacity(resolvedPressOpacity(for: index))
@@ -148,7 +148,7 @@ public struct IconButtonGroup: View {
         }
       }
     }
-    .frame(height: size)
+    .frame(height: buttonSize.height)
     .padding(.horizontal, CustomButtonConfiguration.groupInnerPadding)
     .frame(width: groupWidth)
     .background(
@@ -177,7 +177,7 @@ public struct IconButtonGroup: View {
   /// SwiftUI measuring its intrinsic content size.
   private var groupWidth: CGFloat {
     let padding = CustomButtonConfiguration.groupInnerPadding * 2
-    return CGFloat(items.count) * size + CGFloat(items.count - 1) * style.spacing + padding
+    return CGFloat(items.count) * buttonSize.width + CGFloat(items.count - 1) * style.spacing + padding
   }
 
   // MARK: Animation Helpers
@@ -191,7 +191,7 @@ public struct IconButtonGroup: View {
   /// The scale ratio that grows the group's shared height by exactly
   /// `pressExpansion` points on each side.
   private var pressedScaleY: CGFloat {
-    (size + pressExpansion * 2) / size
+    (buttonSize.height + pressExpansion * 2) / buttonSize.height
   }
 
   /// Press-feedback opacity only. Disabled dimming lives in the icon's
@@ -212,13 +212,13 @@ public struct IconButtonGroup: View {
   /// this split may want re-tuning visually — flagging rather than silently
   /// re-deriving it, since it's a look-and-feel call, not a correctness one.
   private var groupedIconScale: CGFloat {
-    let iconSize = size * CustomButtonConfiguration.iconSizeRatio
+    let iconSize = min(buttonSize.width, buttonSize.height) * CustomButtonConfiguration.iconSizeRatio
     let multiplier: CGFloat
     switch style {
     case .circle: multiplier = 1.0
     case .square: multiplier = 1.4
     }
-    let expansion = size * (CustomButtonConfiguration.pressedIconScale - 1) * multiplier
+    let expansion = buttonSize.height * (CustomButtonConfiguration.pressedIconScale - 1) * multiplier
     return (iconSize + expansion) / iconSize
   }
 }

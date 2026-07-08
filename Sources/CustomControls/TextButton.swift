@@ -46,7 +46,7 @@ public struct TextButton: View {
 
   @Environment(\.iconButtonTheme) private var theme
   @Environment(\.isEnabled) private var isEnabled
-  @Environment(\.buttonSize) private var size
+  @Environment(\.buttonSize) private var buttonSize
   @Environment(\.buttonWidth) private var width
   @Environment(\.buttonPressExpansion) private var pressExpansion
   @Environment(\.iconColorOverride) private var iconColorOverride
@@ -121,7 +121,7 @@ public struct TextButton: View {
   private func content(foreground: Color, background: Color) -> some View {
     label(foreground: foreground)
       .padding(.horizontal, contentPadding)
-      .frame(width: width, height: size, alignment: Alignment(horizontal: contentAlignment, vertical: .center))
+      .frame(width: width, height: buttonSize.height, alignment: Alignment(horizontal: contentAlignment, vertical: .center))
       .contentShape(Rectangle())
       .background(
         RoundedRectangle(cornerRadius: CustomButtonConfiguration.cornerRadius(for: style))
@@ -161,10 +161,11 @@ public struct TextButton: View {
   // MARK: Computed Helpers
 
   /// The size shared by both the icon and the text. Defaults to
-  /// `CustomButtonConfiguration.iconSize(for: size)` — the same value
-  /// `IconButton` uses — unless `.fontSize(_:)` overrides it.
+  /// `CustomButtonConfiguration.iconSize(for: buttonSize.height)` — the same
+  /// value `IconButton` uses for its square case — unless `.fontSize(_:)`
+  /// overrides it.
   private var resolvedFontSize: CGFloat {
-    fontSizeOverride ?? CustomButtonConfiguration.iconSize(for: size)
+    fontSizeOverride ?? CustomButtonConfiguration.iconSize(for: buttonSize.height)
   }
 
   private var contentWeight: Font.Weight {
@@ -180,7 +181,7 @@ public struct TextButton: View {
   /// The scale ratio that grows the background's height by exactly
   /// `pressExpansion` points on each side.
   private var pressedScaleY: CGFloat {
-    (size + pressExpansion * 2) / size
+    (buttonSize.height + pressExpansion * 2) / buttonSize.height
   }
 }
 
@@ -222,7 +223,7 @@ public struct TextButton: View {
   .padding()
 }
 
-#Preview("Disabled") {
+#Preview("Text Button Disabled") {
   VStack(spacing: 16) {
     TextButton(icon: .done, action: {})
     TextButton(icon: .done, action: {}).disabled(true)
@@ -231,7 +232,7 @@ public struct TextButton: View {
   .padding()
 }
 
-#Preview("Font Size") {
+#Preview("Text Button Font Size") {
   VStack(spacing: 16) {
     // Default: tied to buttonSize via CustomButtonConfiguration.iconSize(for:).
     TextButton(icon: .undo, action: {})
@@ -242,8 +243,19 @@ public struct TextButton: View {
 
     // Smaller font on a larger button — the two are fully independent once overridden.
     TextButton(icon: .undo, action: {})
-      .buttonHeight(60)
+      .buttonSize(60)
       .fontSize(15)
+  }
+  .padding()
+}
+
+#Preview("Text Button Font Size Across Sizes") {
+  // .buttonSize(_:) alone (no .fontSize override) scales icon+text together,
+  // since the default font size is derived from it.
+  VStack(spacing: 16) {
+    TextButton(icon: .redo, action: {}).buttonSize(36)
+    TextButton(icon: .redo, action: {}).buttonSize(44)
+    TextButton(icon: .redo, action: {}).buttonSize(60)
   }
   .padding()
 }

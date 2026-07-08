@@ -3,7 +3,10 @@ import SwiftUI
 // MARK: Environment Keys
 
 private struct ButtonSizeKey: EnvironmentKey {
-  static let defaultValue: CGFloat = CustomButtonConfiguration.buttonSize
+  static let defaultValue = CGSize(
+    width: CustomButtonConfiguration.buttonSize,
+    height: CustomButtonConfiguration.buttonSize
+  )
 }
 
 private struct ButtonPressExpansionKey: EnvironmentKey {
@@ -48,8 +51,10 @@ private struct TextButtonFontSizeKey: EnvironmentKey {
 extension EnvironmentValues {
 
   /// The width and height applied to `IconButton` / `IconButtonGroup` items
-  /// beneath this view. Defaults to `CustomButtonConfiguration.buttonSize`.
-  public var buttonSize: CGFloat {
+  /// beneath this view. Defaults to a square of
+  /// `CustomButtonConfiguration.buttonSize`. Set via `.buttonSize(_:)` (square)
+  /// or `.buttonSize(width:height:)` (independent dimensions).
+  public var buttonSize: CGSize {
     get { self[ButtonSizeKey.self] }
     set { self[ButtonSizeKey.self] = newValue }
   }
@@ -62,8 +67,11 @@ extension EnvironmentValues {
     set { self[ButtonPressExpansionKey.self] = newValue }
   }
 
-  /// The fixed width applied to Text Buttons beneath this view. Defaults to
-  /// `CustomButtonConfiguration.textButtonWidth`.
+  /// The fixed width applied to Text Buttons beneath this view. Distinct from
+  /// `buttonSize`'s width — Text Buttons are wide by nature (icon + label), so
+  /// they get their own width concept and default
+  /// (`CustomButtonConfiguration.textButtonWidth`) rather than sharing
+  /// `IconButton`'s square-by-default sizing.
   public var buttonWidth: CGFloat {
     get { self[ButtonWidthKey.self] }
     set { self[ButtonWidthKey.self] = newValue }
@@ -112,7 +120,7 @@ extension EnvironmentValues {
   }
 
   /// An explicit icon+text size for Text Buttons, overriding the default of
-  /// `CustomButtonConfiguration.iconSize(for: buttonSize)`. `nil` (the
+  /// `CustomButtonConfiguration.iconSize(for: buttonSize.height)`. `nil` (the
   /// default) keeps icon and text tied to `.buttonSize(_:)`.
   public var textButtonFontSizeOverride: CGFloat? {
     get { self[TextButtonFontSizeKey.self] }
@@ -124,6 +132,18 @@ extension EnvironmentValues {
 
 extension View {
 
+  /// Sets a square size — the same value for both width and height — for
+  /// `IconButton` / `IconButtonGroup` items beneath this view.
+  public func buttonSize(_ size: CGFloat) -> some View {
+    environment(\.buttonSize, CGSize(width: size, height: size))
+  }
+
+  /// Sets independent width and height for `IconButton` / `IconButtonGroup`
+  /// items beneath this view.
+  public func buttonSize(width: CGFloat, height: CGFloat) -> some View {
+    environment(\.buttonSize, CGSize(width: width, height: height))
+  }
+
   /// Sets the fixed-point background growth applied on press to icon buttons
   /// and Text Buttons beneath this view.
   public func buttonPressExpansion(_ value: CGFloat) -> some View {
@@ -133,11 +153,6 @@ extension View {
   /// Sets the fixed width for Text Buttons beneath this view.
   public func buttonWidth(_ width: CGFloat) -> some View {
     environment(\.buttonWidth, width)
-  }
-
-  /// Sets the height for `IconButton` / `IconButtonGroup` items beneath this view.
-  public func buttonHeight(_ size: CGFloat) -> some View {
-    environment(\.buttonSize, size)
   }
 
   /// Overrides the icon foreground color, taking precedence over `IconButtonTheme`.

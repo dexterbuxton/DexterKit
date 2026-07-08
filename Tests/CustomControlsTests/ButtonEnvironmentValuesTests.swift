@@ -6,7 +6,8 @@ struct ButtonEnvironmentValuesTests {
 
   @Test func testSizeAndExpansionDefaults() {
     let environment = EnvironmentValues()
-    #expect(environment.buttonSize == CustomButtonConfiguration.buttonSize)
+    let expectedSize = CGSize(width: CustomButtonConfiguration.buttonSize, height: CustomButtonConfiguration.buttonSize)
+    #expect(environment.buttonSize == expectedSize)
     #expect(environment.buttonPressExpansion == CustomButtonConfiguration.defaultPressExpansion)
     #expect(environment.buttonWidth == CustomButtonConfiguration.textButtonWidth)
   }
@@ -27,16 +28,24 @@ struct ButtonEnvironmentValuesTests {
 
   @Test func testValuesRoundTripThroughSetter() {
     var environment = EnvironmentValues()
-    environment.buttonSize = 60
+    environment.buttonSize = CGSize(width: 60, height: 60)
     environment.buttonPressExpansion = 10
     environment.iconColorOverride = .red
     environment.textButtonIconTrailing = true
     environment.textButtonContentAlignment = .leading
 
-    #expect(environment.buttonSize == 60)
+    #expect(environment.buttonSize == CGSize(width: 60, height: 60))
     #expect(environment.buttonPressExpansion == 10)
     #expect(environment.iconColorOverride == .red)
     #expect(environment.textButtonIconTrailing)
     #expect(environment.textButtonContentAlignment == .leading)
+  }
+
+  @Test func testButtonSizeSupportsIndependentWidthAndHeight() {
+    var environment = EnvironmentValues()
+    environment.buttonSize = CGSize(width: 80, height: 44)
+
+    #expect(environment.buttonSize.width == 80)
+    #expect(environment.buttonSize.height == 44)
   }
 }

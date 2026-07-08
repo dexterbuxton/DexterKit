@@ -50,7 +50,7 @@ public struct IconButton: View {
 
   @Environment(\.iconButtonTheme) private var theme
   @Environment(\.isEnabled) private var isEnabled
-  @Environment(\.buttonSize) private var size
+  @Environment(\.buttonSize) private var buttonSize
   @Environment(\.buttonPressExpansion) private var pressExpansion
   @Environment(\.iconColorOverride) private var iconColorOverride
   @Environment(\.iconBackgroundOverride) private var iconBackgroundOverride
@@ -137,17 +137,20 @@ public struct IconButton: View {
   /// value (`pressExpansion`) rather than scaling with it — so a wide button
   /// doesn't stretch its short side by the same proportion as its long side.
   private func content(icon: Icon, background: Color) -> some View {
-    IconView(icon, size: CustomButtonConfiguration.iconSize(for: size), weight: iconWeight)
+    IconView(icon, size: CustomButtonConfiguration.iconSize(for: min(buttonSize.width, buttonSize.height)), weight: iconWeight)
       .scaleEffect(isPressed ? CustomButtonConfiguration.pressedIconScale : CustomButtonConfiguration.normalIconScale)
       .opacity(isPressed ? CustomButtonConfiguration.pressedIconOpacity : CustomButtonConfiguration.enabledOpacity)
       .animation(.easeOut(duration: CustomButtonConfiguration.iconScaleAnimationDuration), value: isPressed)
       .animation(.easeOut(duration: CustomButtonConfiguration.iconAnimationDuration), value: isPressed)
-      .frame(width: size, height: size)
+      .frame(width: buttonSize.width, height: buttonSize.height)
       .contentShape(Rectangle())
       .background(
         RoundedRectangle(cornerRadius: CustomButtonConfiguration.cornerRadius(for: style))
           .fill(background)
-          .scaleEffect(isAnimating ? backgroundExpansionRatio : CustomButtonConfiguration.normalScale)
+          .scaleEffect(
+            x: isAnimating ? pressedScaleX : CustomButtonConfiguration.normalScale,
+            y: isAnimating ? pressedScaleY : CustomButtonConfiguration.normalScale
+          )
           .animation(.easeOut(duration: CustomButtonConfiguration.backgroundAnimationDuration), value: isAnimating)
       )
   }
@@ -159,11 +162,15 @@ public struct IconButton: View {
   }
 
   /// The scale ratio that produces exactly `pressExpansion` points of
-  /// background growth on every side, regardless of `size`. Expressed as a
-  /// ratio (rather than a literal frame resize) so it composes with
-  /// `scaleEffect`'s existing animation machinery.
-  private var backgroundExpansionRatio: CGFloat {
-    (size + pressExpansion * 2) / size
+  /// background growth on the width axis, regardless of `buttonSize.width`.
+  private var pressedScaleX: CGFloat {
+    (buttonSize.width + pressExpansion * 2) / buttonSize.width
+  }
+
+  /// The scale ratio that produces exactly `pressExpansion` points of
+  /// background growth on the height axis, regardless of `buttonSize.height`.
+  private var pressedScaleY: CGFloat {
+    (buttonSize.height + pressExpansion * 2) / buttonSize.height
   }
 }
 
