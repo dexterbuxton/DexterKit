@@ -54,10 +54,10 @@ struct CustomButtonConfigurationTests {
     #expect(CustomButtonConfiguration.defaultPressExpansion == 4)
   }
 
-  @Test func testGroupInnerPaddingIsSharedAcrossStyles() {
-    // Both .circle and .square groups use the same inner padding, so their
-    // groupWidth formulas agree for a given item count and spacing.
-    #expect(CustomButtonConfiguration.groupInnerPadding > 0)
+  @Test func testMaxGroupInnerPaddingIsPositive() {
+    // Caps how much spacing above the 2pt threshold gets reallocated to a
+    // group's outer edges — see `IconButtonGroup`'s spacing reallocation.
+    #expect(CustomButtonConfiguration.maxGroupInnerPadding > 0)
   }
 
   @Test func testTextButtonDefaults() {

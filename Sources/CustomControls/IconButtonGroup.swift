@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import SwiftUI
 
 /// A horizontal group of icon buttons sharing a single background container.
@@ -9,6 +10,11 @@ import SwiftUI
 ///   spacing — `.circle` no longer sizes to intrinsic content, so a circle
 ///   group and a square group with the same items/spacing line up exactly
 /// - Slots inherit the resolved icon color unless they carry their own `Icon`
+/// - Spacing above `2` gets partly reallocated to the group's outer edges
+///   (see `CustomButtonConfiguration.maxGroupInnerPadding`), so the shared
+///   background has breathing room around its outermost buttons without
+///   changing the group's total width — a group always reports the exact
+///   same width as `N` bare `IconButton`s laid out at the same spacing
 ///
 /// Size, color overrides, and press expansion come from the environment,
 /// same as `IconButton`.
@@ -112,54 +118,67 @@ public struct IconButtonGroup: View {
   // MARK: Body
 
   public var body: some View {
-    let resolvedBackground = theme.colors.resolvedBackground(override: iconBackgroundOverride, disabled: containerDisabled)
     let resolvedWeight = theme.weight
 
-    HStack(spacing: style.spacing) {
+    HStack(spacing: isCapped ? 0 : effectiveGapSpacing) {
       ForEach(Array(items.indices), id: \.self) { index in
-        let item = items[index]
-        if item.isEmpty {
-          Color.clear
-            .frame(width: buttonSize.width, height: buttonSize.height)
-        }
-        else {
-          let itemDisabled = resolvedDisabled(for: item)
-          let resolvedIconColor = theme.colors.resolvedForeground(override: iconColorOverride, disabled: itemDisabled)
-          let icon = item.resolvedIcon(defaultColor: resolvedIconColor)
-          let isAnimating = viewModel.animatingButtonIndex == index
-          Button(action: item.action) {
-            IconView(
-              icon,
-              size: min(buttonSize.width, buttonSize.height) * CustomButtonConfiguration.iconSizeRatio,
-              weight: isAnimating
-                ? resolvedWeight.bolder(by: CustomButtonConfiguration.pressedWeightSteps)
-                : resolvedWeight
-            )
-              .scaleEffect(isAnimating ? groupedIconScale : CustomButtonConfiguration.normalIconScale)
-              .animation(.easeOut(duration: CustomButtonConfiguration.iconScaleAnimationDuration), value: viewModel.animatingButtonIndex)
-              .frame(width: buttonSize.width, height: buttonSize.height)
-              .contentShape(Rectangle())
-          }
-          .opacity(resolvedPressOpacity(for: index))
-          .animation(.easeOut(duration: CustomButtonConfiguration.iconAnimationDuration), value: viewModel.isButtonPressed(at: index))
-          .disabled(itemDisabled)
-          .accessibilityLabel(icon.accessibilityLabel)
-          .buttonStyle(CustomGroupButtonPressStyle(index: index, viewModel: viewModel))
+        itemView(at: index, resolvedWeight: resolvedWeight)
+        // Only inserted between items, and only once the reallocated edge
+        // padding is capped — otherwise the HStack's own `spacing` above
+        // already carries the full gap.
+        if isCapped, index != items.count - 1 {
+          Spacer(minLength: 0)
         }
       }
     }
+    .padding(.leading, edgePadding)
+    .padding(.trailing, edgePadding)
     .frame(height: buttonSize.height)
-    .padding(.horizontal, CustomButtonConfiguration.groupInnerPadding)
     .frame(width: groupWidth)
     .background(
       groupShape
-        .fill(resolvedBackground)
+        .fill(theme.colors.resolvedBackground(override: iconBackgroundOverride, disabled: containerDisabled))
         .scaleEffect(
           x: viewModel.animatingButtonIndex != nil ? pressedScaleX : CustomButtonConfiguration.normalScale,
           y: viewModel.animatingButtonIndex != nil ? pressedScaleY : CustomButtonConfiguration.normalScale
         )
         .animation(.easeOut(duration: CustomButtonConfiguration.backgroundAnimationDuration), value: viewModel.animatingButtonIndex)
     )
+  }
+
+  // MARK: Item Rendering
+
+  @ViewBuilder
+  private func itemView(at index: Int, resolvedWeight: Font.Weight) -> some View {
+    let item = items[index]
+    if item.isEmpty {
+      Color.clear
+        .frame(width: buttonSize.width, height: buttonSize.height)
+    }
+    else {
+      let itemDisabled = resolvedDisabled(for: item)
+      let resolvedIconColor = theme.colors.resolvedForeground(override: iconColorOverride, disabled: itemDisabled)
+      let icon = item.resolvedIcon(defaultColor: resolvedIconColor)
+      let isAnimating = viewModel.animatingButtonIndex == index
+      Button(action: item.action) {
+        IconView(
+          icon,
+          size: min(buttonSize.width, buttonSize.height) * CustomButtonConfiguration.iconSizeRatio,
+          weight: isAnimating
+            ? resolvedWeight.bolder(by: CustomButtonConfiguration.pressedWeightSteps)
+            : resolvedWeight
+        )
+          .scaleEffect(isAnimating ? groupedIconScale : CustomButtonConfiguration.normalIconScale)
+          .animation(.easeOut(duration: CustomButtonConfiguration.iconScaleAnimationDuration), value: viewModel.animatingButtonIndex)
+          .frame(width: buttonSize.width, height: buttonSize.height)
+          .contentShape(Rectangle())
+      }
+      .opacity(resolvedPressOpacity(for: index))
+      .animation(.easeOut(duration: CustomButtonConfiguration.iconAnimationDuration), value: viewModel.isButtonPressed(at: index))
+      .disabled(itemDisabled)
+      .accessibilityLabel(icon.accessibilityLabel)
+      .buttonStyle(CustomGroupButtonPressStyle(index: index, viewModel: viewModel))
+    }
   }
 
   // MARK: Layout Helpers
@@ -175,9 +194,45 @@ public struct IconButtonGroup: View {
 
   /// Explicit, non-optional width for both styles — no shape relies on
   /// SwiftUI measuring its intrinsic content size.
-  private var groupWidth: CGFloat {
-    let padding = CustomButtonConfiguration.groupInnerPadding * 2
-    return CGFloat(items.count) * buttonSize.width + CGFloat(items.count - 1) * style.spacing + padding
+  var groupWidth: CGFloat {
+    Self.groupWidth(itemCount: items.count, buttonWidth: buttonSize.width, spacing: style.spacing)
+  }
+
+  // MARK: Spacing Reallocation
+
+  /// Number of internal gaps between adjacent buttons.
+  var gapCount: Int {
+    Self.gapCount(itemCount: items.count)
+  }
+
+  /// Whether any spacing gets reallocated to the group's outer edges at
+  /// all. Spacing at `2` or below is always left exactly as configured, no
+  /// matter how many buttons are in the group.
+  var reallocatesSpacing: Bool {
+    Self.reallocatesSpacing(itemCount: items.count, spacing: style.spacing)
+  }
+
+  /// Whether the group has more gaps than `maxGroupInnerPadding` allows.
+  /// Past this point the edge padding holds fixed at the cap, and the
+  /// leftover space distributes across the gaps via flexible spacers
+  /// instead of a single fixed value.
+  var isCapped: Bool {
+    Self.isCapped(itemCount: items.count, spacing: style.spacing)
+  }
+
+  /// The amount reallocated to each outer edge — one point per gap, capped
+  /// so it never exceeds `maxGroupInnerPadding` regardless of gap count.
+  var edgePadding: CGFloat {
+    Self.edgePadding(itemCount: items.count, spacing: style.spacing)
+  }
+
+  /// The fixed spacing applied between adjacent buttons once reallocation
+  /// is in effect but not capped. A flat `spacing - 2` regardless of gap
+  /// count: `edgePadding` equals `gapCount` in this branch, so exactly one
+  /// point per gap moves to each of the two outer edges, in total 2 points
+  /// per gap, leaving `spacing - 2` behind it.
+  var effectiveGapSpacing: CGFloat {
+    Self.effectiveGapSpacing(itemCount: items.count, spacing: style.spacing)
   }
 
   // MARK: Animation Helpers
@@ -195,8 +250,8 @@ public struct IconButtonGroup: View {
   }
 
   /// Press-feedback opacity only. Disabled dimming lives in the icon's
-  /// resolved color (see `resolvedIconColor` in `body`), so this doesn't
-  /// take a disabled flag.
+  /// resolved color (see `resolvedIconColor` in `itemView(at:resolvedWeight:)`),
+  /// so this doesn't take a disabled flag.
   private func resolvedPressOpacity(for index: Int) -> Double {
     viewModel.isButtonPressed(at: index)
       ? CustomButtonConfiguration.pressedIconOpacity
@@ -206,11 +261,13 @@ public struct IconButtonGroup: View {
   /// Scales the icon by the same point expansion a standalone press produces,
   /// expressed relative to the icon's size.
   ///
-  /// NOTE: the `.circle` / `.square` multiplier split (1.0 / 1.4) predates the
-  /// `groupWidth` unification above, when `.square` had no shared inner
-  /// padding to compensate for. Now that both styles share identical padding,
-  /// this split may want re-tuning visually — flagging rather than silently
-  /// re-deriving it, since it's a look-and-feel call, not a correctness one.
+  /// NOTE: the `.circle` / `.square` multiplier split (1.0 / 1.4) predates
+  /// both the original `groupWidth` unification and this spacing-reallocation
+  /// pass. Both styles now go through identical `edgePadding`/`groupWidth`
+  /// math (it only depends on `style.spacing`, not which case), so this
+  /// split may still want re-tuning visually — flagging rather than
+  /// silently re-deriving it, since it's a look-and-feel call, not a
+  /// correctness one.
   private var groupedIconScale: CGFloat {
     let iconSize = min(buttonSize.width, buttonSize.height) * CustomButtonConfiguration.iconSizeRatio
     let multiplier: CGFloat
@@ -287,24 +344,14 @@ public struct IconButtonGroup: View {
 
   return VStack(alignment: .leading, spacing: 50) {
     VStack(spacing: 8) {
+      // Single Disabled
       IconButtonGroup(style: .square(spacing: 8)) {
         IconButtonItem(.back, isDisabled: true, action: {})
         IconButtonItem(.cancel, action: {})
         IconButtonItem(.forward, action: {})
       }
       .theme(defaultDisabledTheme)
-      IconButtonGroup(style: .square(spacing: 8)) {
-        IconButtonItem(.back, isDisabled: true, action: {})
-        IconButtonItem(.cancel, isDisabled: true, action: {})
-        IconButtonItem(.forward, action: {})
-      }
-      .theme(defaultDisabledTheme)
-      IconButtonGroup(style: .square(spacing: 8)) {
-        IconButtonItem(.back, isDisabled: true, action: {})
-        IconButtonItem(.cancel, isDisabled: true, action: {})
-        IconButtonItem(.forward, isDisabled: true, action: {})
-      }
-      .theme(defaultDisabledTheme)
+      // All Disabled
       IconButtonGroup(style: .square(spacing: 8)) {
         IconButtonItem(.back, action: {})
         IconButtonItem(.cancel, action: {})
@@ -315,24 +362,14 @@ public struct IconButtonGroup: View {
     }
 
     VStack(spacing: 8) {
+      // Single Disabled
       IconButtonGroup(style: .square(spacing: 8)) {
         IconButtonItem(.back, isDisabled: true, action: {})
         IconButtonItem(.cancel, action: {})
         IconButtonItem(.forward, action: {})
       }
       .theme(customDisabled)
-      IconButtonGroup(style: .square(spacing: 8)) {
-        IconButtonItem(.back, isDisabled: true, action: {})
-        IconButtonItem(.cancel, isDisabled: true, action: {})
-        IconButtonItem(.forward, action: {})
-      }
-      .theme(customDisabled)
-      IconButtonGroup(style: .square(spacing: 8)) {
-        IconButtonItem(.back, isDisabled: true, action: {})
-        IconButtonItem(.cancel, isDisabled: true, action: {})
-        IconButtonItem(.forward, isDisabled: true, action: {})
-      }
-      .theme(customDisabled)
+      // All Disabled
       IconButtonGroup(style: .square(spacing: 8)) {
         IconButtonItem(.back, action: {})
         IconButtonItem(.cancel, action: {})
@@ -344,3 +381,53 @@ public struct IconButtonGroup: View {
   }
   .padding()
 }
+
+// MARK: Pure Layout Math
+
+extension IconButtonGroup {
+
+  /// Number of internal gaps between adjacent buttons for a group of
+  /// `itemCount` items.
+  static func gapCount(itemCount: Int) -> Int {
+    max(0, itemCount - 1)
+  }
+
+  /// Whether any spacing gets reallocated to a group's outer edges at all.
+  /// Spacing at `2` or below is always left exactly as configured, no
+  /// matter how many buttons are in the group.
+  static func reallocatesSpacing(itemCount: Int, spacing: CGFloat) -> Bool {
+    gapCount(itemCount: itemCount) > 0 && spacing > 2
+  }
+
+  /// Whether a group has more gaps than `maxGroupInnerPadding` allows. Past
+  /// this point the edge padding holds fixed at the cap, and the leftover
+  /// space distributes across the gaps via flexible spacers instead of a
+  /// single fixed value.
+  static func isCapped(itemCount: Int, spacing: CGFloat) -> Bool {
+    reallocatesSpacing(itemCount: itemCount, spacing: spacing)
+      && CGFloat(gapCount(itemCount: itemCount)) > CustomButtonConfiguration.maxGroupInnerPadding
+  }
+
+  /// The amount reallocated to each outer edge — one point per gap, capped
+  /// so it never exceeds `maxGroupInnerPadding` regardless of gap count.
+  static func edgePadding(itemCount: Int, spacing: CGFloat) -> CGFloat {
+    guard reallocatesSpacing(itemCount: itemCount, spacing: spacing) else { return 0 }
+    return min(CGFloat(gapCount(itemCount: itemCount)), CustomButtonConfiguration.maxGroupInnerPadding)
+  }
+
+  /// The fixed spacing applied between adjacent buttons once reallocation
+  /// is in effect but not capped.
+  static func effectiveGapSpacing(itemCount: Int, spacing: CGFloat) -> CGFloat {
+    reallocatesSpacing(itemCount: itemCount, spacing: spacing) ? spacing - 2 : spacing
+  }
+
+  /// Explicit, non-optional width for both styles — no shape relies on
+  /// SwiftUI measuring its intrinsic content size. Unaffected by spacing
+  /// reallocation: padding always comes out of existing gap spacing rather
+  /// than adding to it, so this formula holds regardless of whether
+  /// `edgePadding`/`isCapped` are in effect for the given inputs.
+  static func groupWidth(itemCount: Int, buttonWidth: CGFloat, spacing: CGFloat) -> CGFloat {
+    CGFloat(itemCount) * buttonWidth + CGFloat(gapCount(itemCount: itemCount)) * spacing
+  }
+}
+// swiftlint:enable file_length

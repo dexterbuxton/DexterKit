@@ -100,10 +100,22 @@ public enum CustomButtonConfiguration {
   /// Default spacing between buttons in a group.
   public static let groupSpacing: CGFloat = 8
 
-  /// Inner horizontal padding added to both circle- and square-style groups,
-  /// applied equally so the two shapes report the same overall group width
-  /// for a given item count and spacing.
-  public static let groupInnerPadding: CGFloat = 6
+  /// Maximum padding reallocated to each outer edge of an `IconButtonGroup`,
+  /// taken out of its own inter-button spacing rather than added on top of
+  /// it — a group's total width never changes because of this, only where
+  /// the space sits.
+  ///
+  /// Only applies once a group's configured spacing exceeds `2`; at `2` or
+  /// below, spacing is left exactly as configured, with `0` padding on
+  /// either edge, regardless of how many buttons are in the group. Above
+  /// that threshold, one point moves from each internal gap to the leading
+  /// and trailing edges (so with `N` gaps, up to this many points end up on
+  /// each side) — giving the shared background breathing room around its
+  /// outermost buttons. Once a group has more gaps than this cap allows,
+  /// the edges hold fixed at the cap and the remaining space distributes
+  /// evenly across the gaps via flexible spacers instead of a single fixed
+  /// per-gap value.
+  public static let maxGroupInnerPadding: CGFloat = 6
 
   // MARK: Typography (Text Button)
 

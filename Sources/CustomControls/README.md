@@ -134,7 +134,19 @@ IconButtonGroup {
 
 Both `.circle` and `.square(spacing:)` report the same overall width for a
 given item count and spacing, so a circle group and a square group line up
-exactly:
+exactly.
+
+Spacing above `2` gets partly reallocated to the group's outer edges — up to
+`CustomButtonConfiguration.maxGroupInnerPadding` per side, one point per
+internal gap — so the shared background gets breathing room around its
+outermost buttons without the group's total width ever changing. Spacing at
+`2` or below is left exactly as configured, with no edge padding, regardless
+of item count. Once a group has more gaps than the cap allows, the edges hold
+fixed at the cap and the leftover space distributes evenly across the gaps
+instead of a single per-gap value. The net effect: a group's total width
+always exactly matches `N` bare `IconButton`s laid out at the same spacing —
+useful when a parent view reserves a fixed-width column shared by a mix of
+grouped and standalone buttons.
 
 ```swift
 HStack(spacing: 8) {
